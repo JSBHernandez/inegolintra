@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { clientCaseSchema } from '@/lib/validations'
-import { verifyAuth } from '@/lib/auth'
+import { verifyAuth, verifyLegacyAuth } from '@/lib/auth'
 
 export async function POST(request: NextRequest) {
-  // Check authentication
-  if (!verifyAuth(request)) {
+  // Check authentication - both new user auth and legacy admin auth
+  const authUser = await verifyAuth(request)
+  const isLegacyAdmin = verifyLegacyAuth(request)
+  
+  if (!authUser && !isLegacyAdmin) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Only admins can access client portal
+  if (authUser && authUser.role !== 'ADMIN') {
+    return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
   }
 
   try {
@@ -47,7 +55,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  // Check authentication
+  // Check authentication - both new user auth and legacy admin auth
   if (!verifyAuth(request)) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }

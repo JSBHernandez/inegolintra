@@ -33,3 +33,144 @@ model CaseNote {
   @@index([clientCaseId], map: "case_notes_clientCaseId_fkey")
   @@map("case_notes")
 }
+
+// User Management System
+model User {
+  id                    Int                     @id @default(autoincrement())
+  email                 String                  @unique @db.VarChar(255)
+  name                  String                  @db.VarChar(255)
+  position              String                  @db.VarChar(100)
+  password              String                  @db.VarChar(255)
+  role                  UserRole                @default(AGENT)
+  isActive              Boolean                 @default(true)
+  mustChangePassword    Boolean                 @default(true)
+  lastLogin             DateTime?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  
+  // Relations
+  permissionRequests    PermissionRequest[]
+  incidentReports       IncidentReport[]
+  approvedPermissions   PermissionRequest[]     @relation("ApprovedByUser")
+  
+  @@index([email], map: "idx_users_email")
+  @@index([role], map: "idx_users_role")
+  @@map("users")
+}
+
+// HR Module - Permission Requests
+model PermissionRequest {
+  id            Int                   @id @default(autoincrement())
+  userId        Int
+  requestType   PermissionType
+  startDate     DateTime
+  endDate       DateTime
+  reason        String                @db.Text
+  status        RequestStatus         @default(PENDING)
+  approvedBy    Int?
+  approvedAt    DateTime?
+  rejectedReason String?              @db.Text
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  
+  // Relations
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  approver      User?                 @relation("ApprovedByUser", fields: [approvedBy], references: [id])
+  
+  @@index([userId], map: "idx_permission_requests_user")
+  @@index([status], map: "idx_permission_requests_status")
+  @@map("permission_requests")
+}
+
+// HR Module - Incident Reports
+model IncidentReport {
+  id            Int                   @id @default(autoincrement())
+  userId        Int
+  title         String                @db.VarChar(255)
+  description   String                @db.Text
+  incidentType  IncidentType
+  priority      Priority              @default(MEDIUM)
+  imageUrl      String?               @db.VarChar(500)
+  status        IncidentStatus        @default(OPEN)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  
+  // Relations
+  user          User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId], map: "idx_incident_reports_user")
+  @@index([status], map: "idx_incident_reports_status")
+  @@index([priority], map: "idx_incident_reports_priority")
+  @@map("incident_reports")
+}
+
+// Training Module
+model TrainingModule {
+  id            Int                   @id @default(autoincrement())
+  title         String                @db.VarChar(255)
+  description   String?               @db.Text
+  category      TrainingCategory
+  content       String                @db.LongText
+  isActive      Boolean               @default(true)
+  order         Int                   @default(0)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  
+  @@index([category], map: "idx_training_modules_category")
+  @@index([isActive], map: "idx_training_modules_active")
+  @@map("training_modules")
+}
+
+// Enums
+enum UserRole {
+  ADMIN
+  AGENT
+}
+
+enum PermissionType {
+  VACATION
+  SICK_LEAVE
+  PERSONAL_LEAVE
+  MATERNITY_LEAVE
+  PATERNITY_LEAVE
+  OTHER
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum IncidentType {
+  TECHNICAL
+  WORKPLACE
+  HARASSMENT
+  SAFETY
+  EQUIPMENT
+  OTHER
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum IncidentStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum TrainingCategory {
+  VISAS
+  IMMIGRATION_LAW
+  CUSTOMER_SERVICE
+  TECHNOLOGY
+  COMPLIANCE
+  SAFETY
+  OTHER
+}
