@@ -8,7 +8,8 @@ import {
   UserManagement,
   HumanResources,
   TrainingModules,
-  GlobalSearch
+  GlobalSearch,
+  MyProfile
 } from './index'
 
 interface DashboardProps {
@@ -32,6 +33,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     { id: 'hr', label: 'Human Resources', icon: '📋', available: true },
     { id: 'training', label: 'Training', icon: '📚', available: true },
     { id: 'users', label: 'User Management', icon: '👤', available: isAdmin },
+    { id: 'profile', label: 'My Profile', icon: '👨‍💼', available: true },
   ]
 
   const renderContent = () => {
@@ -44,6 +46,8 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         return <HumanResources user={user} />
       case 'training':
         return <TrainingModules user={user} />
+      case 'profile':
+        return <MyProfile user={user} />
       default:
         return (
           <div className="max-w-7xl mx-auto">

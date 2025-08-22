@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyAuth, hashPassword, generateRandomPassword } from '@/lib/auth'
 import { createUserSchema, updateUserSchema } from '@/lib/validations'
+import { emailService } from '@/lib/email'
 
 export async function GET(request: NextRequest) {
   try {
@@ -56,6 +57,7 @@ export async function POST(request: NextRequest) {
 
     // Generate random password
     const temporaryPassword = generateRandomPassword(16)
+    console.log(`Generated temporary password for ${validatedData.email}: ${temporaryPassword} (Length: ${temporaryPassword.length})`)
     const hashedPassword = await hashPassword(temporaryPassword)
 
     const newUser = await db.user.create({
@@ -78,14 +80,27 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    // TODO: Send email with temporary password
-    console.log(`Temporary password for ${newUser.email}: ${temporaryPassword}`)
+    // Send welcome email with temporary password
+    try {
+      const emailSent = await emailService.sendWelcomeEmail(
+        newUser.email,
+        newUser.name,
+        temporaryPassword
+      )
+      
+      if (!emailSent) {
+        console.warn(`Failed to send welcome email to ${newUser.email}`)
+      }
+    } catch (emailError) {
+      console.error('Error sending welcome email:', emailError)
+      // Don't fail user creation if email fails
+    }
 
     return NextResponse.json(
       { 
         success: true, 
         data: newUser,
-        temporaryPassword // Remove this in production and send via email
+        message: 'User created successfully. An email with access credentials has been sent.'
       },
       { status: 201 }
     )

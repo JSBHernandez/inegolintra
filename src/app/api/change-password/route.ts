@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyAuth, verifyPassword, hashPassword } from '@/lib/auth'
 import { passwordChangeSchema } from '@/lib/validations'
+import { emailService } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,9 +45,20 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Send password change notification email
+    try {
+      await emailService.sendPasswordChangeNotification(
+        authUser.email,
+        authUser.name
+      )
+    } catch (emailError) {
+      console.error('Error sending password change notification:', emailError)
+      // Don't fail the password change if email fails
+    }
+
     return NextResponse.json({ 
       success: true, 
-      message: 'Password changed successfully' 
+      message: 'Contraseña actualizada exitosamente. Se ha enviado una confirmación por correo electrónico.' 
     })
   } catch (error) {
     console.error('Password change error:', error)
