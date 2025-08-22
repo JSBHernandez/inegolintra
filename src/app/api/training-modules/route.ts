@@ -13,10 +13,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
 
-    let whereClause: any = { isActive: true }
+    const whereClause: { isActive: boolean; category?: 'VISAS' | 'IMMIGRATION_LAW' | 'CUSTOMER_SERVICE' | 'TECHNOLOGY' | 'COMPLIANCE' | 'SAFETY' | 'OTHER' } = { isActive: true }
     
     if (category) {
-      whereClause.category = category
+      whereClause.category = category as 'VISAS' | 'IMMIGRATION_LAW' | 'CUSTOMER_SERVICE' | 'TECHNOLOGY' | 'COMPLIANCE' | 'SAFETY' | 'OTHER'
     }
 
     const trainingModules = await db.trainingModule.findMany({

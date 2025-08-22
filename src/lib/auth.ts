@@ -13,7 +13,7 @@ export async function verifyAuth(request: NextRequest): Promise<AuthUser | null>
 
   try {
     const jwtSecret = process.env.JWT_SECRET || '946038027d28fc4a98149a55e26a3da61ee6d5c1cd9a2db409a71080afcac49753c9ab8d7d125b771124b93501706c5938efa2e36b2eaf7f5000e159f1807d95'
-    const decoded = jwt.verify(token, jwtSecret) as any
+    const decoded = jwt.verify(token, jwtSecret) as { userId: number; iat: number; exp: number }
     
     // Get user from database to ensure they still exist and are active
     const user = await db.user.findUnique({
@@ -102,7 +102,7 @@ export function verifyLegacyAuth(request: NextRequest): boolean {
 
   try {
     const jwtSecret = process.env.JWT_SECRET || '946038027d28fc4a98149a55e26a3da61ee6d5c1cd9a2db409a71080afcac49753c9ab8d7d125b771124b93501706c5938efa2e36b2eaf7f5000e159f1807d95'
-    const decoded = jwt.verify(token, jwtSecret) as any
+    const decoded = jwt.verify(token, jwtSecret) as { username: string; role: string; iat: number; exp: number }
     
     // Check if it's the legacy admin token
     return decoded.username === 'admin' && decoded.role === 'admin'

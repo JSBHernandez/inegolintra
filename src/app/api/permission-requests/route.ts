@@ -111,8 +111,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid status' }, { status: 400 })
     }
 
-    const updateData: any = {
-      status,
+    const updateData: {
+      status: 'APPROVED' | 'REJECTED'
+      approvedBy: number
+      approvedAt: Date
+      rejectedReason?: string
+    } = {
+      status: status as 'APPROVED' | 'REJECTED',
       approvedBy: authUser.id,
       approvedAt: new Date(),
     }

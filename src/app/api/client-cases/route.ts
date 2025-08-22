@@ -56,8 +56,16 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   // Check authentication - both new user auth and legacy admin auth
-  if (!verifyAuth(request)) {
+  const authUser = await verifyAuth(request)
+  const isLegacyAdmin = verifyLegacyAuth(request)
+  
+  if (!authUser && !isLegacyAdmin) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Only admins can access client portal
+  if (authUser && authUser.role !== 'ADMIN') {
+    return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 })
   }
 
   try {

@@ -29,7 +29,7 @@ export const createUserSchema = z.object({
   email: z.string().email('Invalid email address').max(255, 'Email is too long'),
   name: z.string().min(1, 'Name is required').max(255, 'Name is too long'),
   position: z.string().min(1, 'Position is required').max(100, 'Position is too long'),
-  role: z.enum(['ADMIN', 'AGENT']).default('AGENT'),
+  role: z.enum(['ADMIN', 'AGENT']),
 })
 
 export const updateUserSchema = z.object({
@@ -40,8 +40,12 @@ export const updateUserSchema = z.object({
 })
 
 export const loginSchema = z.object({
-  email: z.string().email('Invalid email address'),
+  username: z.string().min(1, 'Username/Email is required').optional(),
+  email: z.string().min(1, 'Username/Email is required').optional(),
   password: z.string().min(1, 'Password is required'),
+}).refine(data => data.username || data.email, {
+  message: "Either username or email is required",
+  path: ["username"]
 })
 
 export const passwordChangeSchema = z.object({
@@ -85,7 +89,7 @@ export const incidentReportSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
   description: z.string().min(10, 'Please provide a detailed description (minimum 10 characters)').max(2000, 'Description is too long'),
   incidentType: z.enum(['TECHNICAL', 'WORKPLACE', 'HARASSMENT', 'SAFETY', 'EQUIPMENT', 'OTHER']),
-  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']).default('MEDIUM'),
+  priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'URGENT']),
   imageUrl: z.string().url('Invalid image URL').optional().or(z.literal('')),
 })
 
@@ -95,8 +99,8 @@ export const trainingModuleSchema = z.object({
   description: z.string().max(500, 'Description is too long').optional(),
   category: z.enum(['VISAS', 'IMMIGRATION_LAW', 'CUSTOMER_SERVICE', 'TECHNOLOGY', 'COMPLIANCE', 'SAFETY', 'OTHER']),
   content: z.string().min(1, 'Content is required'),
-  isActive: z.boolean().default(true),
-  order: z.number().int().min(0).default(0),
+  isActive: z.boolean(),
+  order: z.number().int().min(0),
 })
 
 // Constants for dropdowns
@@ -138,7 +142,7 @@ export const trainingCategoryOptions = [
 export type CreateUserFormData = z.infer<typeof createUserSchema>
 export type UpdateUserFormData = z.infer<typeof updateUserSchema>
 export type LoginFormData = z.infer<typeof loginSchema>
-export type PasswordChangeFormData = z.infer<typeof passwordChangeSchema>
 export type PermissionRequestFormData = z.infer<typeof permissionRequestSchema>
 export type IncidentReportFormData = z.infer<typeof incidentReportSchema>
 export type TrainingModuleFormData = z.infer<typeof trainingModuleSchema>
+export type PasswordChangeFormData = z.infer<typeof passwordChangeSchema>
