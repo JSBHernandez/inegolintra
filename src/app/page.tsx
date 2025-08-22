@@ -5,14 +5,20 @@ import LoginForm from '@/components/LoginForm'
 import Dashboard from '@/components/Dashboard'
 import PasswordChangeModal from '@/components/PasswordChangeModal'
 import { useAuth } from '@/hooks/useAuth'
+import { AuthUser } from '@/types'
 
 export default function Home() {
-  const { user, isAuthenticated, isLoading, login, logout } = useAuth()
+  const { user, isAuthenticated, isLoading, login, logout, checkAuthStatus } = useAuth()
   const [showPasswordChange, setShowPasswordChange] = useState(false)
 
-  const handleLoginSuccess = () => {
-    // Login will be handled by the LoginForm component
-    // Password change will be handled by the auth system
+  const handleLoginSuccess = (userData?: AuthUser) => {
+    if (userData) {
+      // Set user data directly from login response
+      login(userData)
+    } else {
+      // Fallback: recheck authentication status
+      checkAuthStatus()
+    }
   }
 
   const handlePasswordChanged = () => {

@@ -2,13 +2,14 @@
 
 import { useState } from 'react'
 import Image from 'next/image'
+import { AuthUser } from '@/types'
 
 interface WebkitStyle extends React.CSSProperties {
   WebkitTextFillColor?: string
 }
 
 interface LoginFormProps {
-  onLoginSuccess: () => void
+  onLoginSuccess: (user?: AuthUser) => void
 }
 
 export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
@@ -34,7 +35,16 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
       const result = await response.json()
 
       if (result.success) {
-        onLoginSuccess()
+        // Pass user data to parent component if available
+        const userData = result.user ? {
+          id: result.user.id,
+          email: result.user.email,
+          name: result.user.name,
+          position: result.user.position,
+          role: result.user.role,
+          mustChangePassword: result.mustChangePassword || false
+        } : undefined
+        onLoginSuccess(userData)
       } else {
         setError(result.error || 'Login failed')
       }
