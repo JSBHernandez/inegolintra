@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model ClientCase {
+  id            Int        @id @default(autoincrement())
+  clientName    String     @db.VarChar(255)
+  caseType      String     @db.VarChar(100)
+  notes         String?    @db.Text
+  totalContract Decimal?   @db.Decimal(10, 2)
+  paralegal     String?    @db.VarChar(100)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  status        String     @default("Active") @db.VarChar(50)
+  caseNotes     CaseNote[]
+
+  @@index([status], map: "idx_client_cases_status")
+  @@map("client_cases")
+}
+
+model CaseNote {
+  id           Int        @id @default(autoincrement())
+  content      String     @db.Text
+  createdAt    DateTime   @default(now())
+  clientCaseId Int
+  clientCase   ClientCase @relation(fields: [clientCaseId], references: [id], onDelete: Cascade)
+
+  @@index([clientCaseId], map: "case_notes_clientCaseId_fkey")
+  @@map("case_notes")
+}

@@ -1,0 +1,11 @@
+# Archivos y carpetas a EXCLUIR al subir a Hostinger
+node_modules/
+.next/
+.git/
+.env*
+!.env.production
+.DS_Store
+*.log
+.vscode/
+README.md
+DATABASE_SETUP.md
