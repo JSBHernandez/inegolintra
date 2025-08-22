@@ -1,0 +1,12 @@
+// Component exports
+export { default as ClientPortal } from './ClientPortal'
+export { default as UserManagement } from './UserManagement'
+export { default as HumanResources } from './HumanResources'
+export { default as TrainingModules } from './TrainingModules'
+export { default as GlobalSearch } from './GlobalSearch'
+export { default as LoginForm } from './LoginForm'
+export { default as Dashboard } from './Dashboard'
+export { default as PasswordChangeModal } from './PasswordChangeModal'
+export { default as ClientCaseForm } from './ClientCaseForm'
+export { default as ClientCasesList } from './ClientCasesList'
+export { default as CaseNotes } from './CaseNotes'

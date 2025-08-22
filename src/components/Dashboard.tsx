@@ -3,11 +3,13 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { AuthUser } from '@/types'
-import ClientPortal from './ClientPortal'
-import UserManagement from './UserManagement'
-import HumanResources from './HumanResources'
-import TrainingModules from './TrainingModules'
-import GlobalSearch from './GlobalSearch'
+import { 
+  ClientPortal,
+  UserManagement,
+  HumanResources,
+  TrainingModules,
+  GlobalSearch
+} from './index'
 
 interface DashboardProps {
   user: AuthUser | null

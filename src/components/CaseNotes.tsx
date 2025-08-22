@@ -37,7 +37,8 @@ export default function CaseNotes({ clientCaseId, clientName, onClose, onNoteAdd
       } else {
         setError(result.error || 'Failed to fetch notes')
       }
-    } catch (_) {
+    } catch (error) {
+      console.error('Error fetching notes:', error)
       setError('Failed to fetch notes')
     } finally {
       setIsLoading(false)
@@ -81,7 +82,8 @@ export default function CaseNotes({ clientCaseId, clientName, onClose, onNoteAdd
       } else {
         setError(result.error || 'Failed to add note')
       }
-    } catch (_) {
+    } catch (error) {
+      console.error('Error adding note:', error)
       setError('Failed to add note')
     } finally {
       setIsSubmitting(false)

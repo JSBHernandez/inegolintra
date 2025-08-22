@@ -1,8 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import ClientCaseForm from './ClientCaseForm'
-import ClientCasesList from './ClientCasesList'
+import { ClientCaseForm, ClientCasesList } from './index'
 import { ClientCase } from '@/types'
 
 export default function ClientPortal() {

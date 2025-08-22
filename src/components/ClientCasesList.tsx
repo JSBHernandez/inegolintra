@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import CaseNotes from './CaseNotes'
+import { CaseNotes } from './index'
 import { paralegalOptions } from '@/lib/validations'
 
 interface SafariInputStyle {
