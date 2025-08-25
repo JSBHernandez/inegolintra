@@ -16,7 +16,7 @@ interface GlobalSearchProps {
   user: AuthUser
 }
 
-export default function GlobalSearch({ user }: GlobalSearchProps) {
+export default function GlobalSearch({ user: _user }: GlobalSearchProps) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult[]>([])
   const [loading, setLoading] = useState(false)
@@ -68,7 +68,7 @@ export default function GlobalSearch({ user }: GlobalSearchProps) {
   }, [searchType, recentSearches])
 
   const debouncedSearch = useCallback(
-    debounce(performSearch, 300),
+    debounce((q: string) => performSearch(q), 300),
     [performSearch]
   )
 

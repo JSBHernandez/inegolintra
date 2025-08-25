@@ -79,7 +79,7 @@ export default function ClientCaseForm({ onSuccess, editingCase, onCancelEdit }:
       } else {
         setSubmitMessage(`Error: ${result.error}`)
       }
-    } catch (_) {
+    } catch {
       setSubmitMessage('Failed to submit form. Please try again.')
     } finally {
       setIsSubmitting(false)

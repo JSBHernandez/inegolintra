@@ -3,6 +3,7 @@ import { db } from '@/lib/db'
 import { verifyAuth, verifyPassword, hashPassword } from '@/lib/auth'
 import { passwordChangeSchema } from '@/lib/validations'
 import { emailService } from '@/lib/email'
+import { ZodError } from 'zod'
 
 export async function POST(request: NextRequest) {
   try {
@@ -63,10 +64,10 @@ export async function POST(request: NextRequest) {
       message: 'Contraseña actualizada exitosamente. Se ha enviado una confirmación por correo electrónico.' 
     })
     
-    } catch (validationError: any) {
+    } catch (validationError: unknown) {
       // Handle Zod validation errors specifically
-      if (validationError.name === 'ZodError') {
-        const errors = validationError.errors.map((err: any) => err.message).join(', ')
+      if (validationError instanceof ZodError) {
+        const errors = validationError.issues.map((issue) => issue.message).join(', ')
         return NextResponse.json({ 
           success: false, 
           error: errors 

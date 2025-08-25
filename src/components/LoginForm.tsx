@@ -48,7 +48,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
       } else {
         setError(result.error || 'Login failed')
       }
-    } catch (_) {
+    } catch {
       setError('Connection error. Please try again.')
     } finally {
       setIsLoading(false)

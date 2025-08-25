@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { AuthUser } from '@/types'
 
 interface MyProfileProps {
@@ -15,7 +15,6 @@ interface PasswordChangeForm {
 }
 
 export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
-  const [isEditing, setIsEditing] = useState(false)
   const [showPasswordChange, setShowPasswordChange] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
@@ -30,12 +29,6 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
-  })
-
-  const [profileData, setProfileData] = useState({
-    name: user.name,
-    position: user.position,
-    email: user.email
   })
 
   // Password validation functions
@@ -113,7 +106,7 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
       } else {
         setError(result.error || 'Error changing password')
       }
-    } catch (error) {
+    } catch {
       setError('Connection error. Please try again.')
     } finally {
       setLoading(false)

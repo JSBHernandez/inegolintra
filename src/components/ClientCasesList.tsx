@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { CaseNotes } from './index'
 import { paralegalOptions } from '@/lib/validations'
 
@@ -58,7 +58,7 @@ export default function ClientCasesList({ refreshTrigger, onEdit }: ClientCasesL
       } else {
         setError(result.error || 'Failed to fetch cases')
       }
-    } catch (_) {
+    } catch {
       setError('Failed to fetch cases')
     } finally {
       setLoading(false)
@@ -83,43 +83,12 @@ export default function ClientCasesList({ refreshTrigger, onEdit }: ClientCasesL
       } else {
         alert(`Error deleting case: ${result.error}`)
       }
-    } catch (_) {
+    } catch {
       alert('Failed to delete case. Please try again.')
     } finally {
       setDeletingId(null)
     }
   }
-
-  // Filter cases based on status, paralegal, and search query
-  useEffect(() => {
-    let filtered = cases
-
-    // Filter by status
-    if (statusFilter !== 'All') {
-      filtered = filtered.filter(clientCase => 
-        clientCase.status === statusFilter
-      )
-    }
-
-    // Filter by paralegal
-    if (paralegalFilter !== 'All') {
-      filtered = filtered.filter(clientCase => 
-        clientCase.paralegal === paralegalFilter
-      )
-    }
-
-    // Filter by search query
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(clientCase =>
-        clientCase.clientName.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    }
-
-    // Apply sorting
-    const sorted = sortCases(filtered)
-
-    setFilteredCases(sorted)
-  }, [cases, statusFilter, paralegalFilter, searchQuery, sortField, sortDirection])
 
   // Get unique client names for suggestions
   const getClientNameSuggestions = () => {
@@ -164,7 +133,7 @@ export default function ClientCasesList({ refreshTrigger, onEdit }: ClientCasesL
     }
   }
 
-  const sortCases = (casesToSort: ClientCase[]) => {
+  const sortCases = useCallback((casesToSort: ClientCase[]) => {
     if (!sortField) return casesToSort
 
     return [...casesToSort].sort((a, b) => {
@@ -212,7 +181,38 @@ export default function ClientCasesList({ refreshTrigger, onEdit }: ClientCasesL
       }
       return 0
     })
-  }
+  }, [sortField, sortDirection])
+
+  // Filter cases based on status, paralegal, and search query
+  useEffect(() => {
+    let filtered = cases
+
+    // Filter by status
+    if (statusFilter !== 'All') {
+      filtered = filtered.filter(clientCase => 
+        clientCase.status === statusFilter
+      )
+    }
+
+    // Filter by paralegal
+    if (paralegalFilter !== 'All') {
+      filtered = filtered.filter(clientCase => 
+        clientCase.paralegal === paralegalFilter
+      )
+    }
+
+    // Filter by search query
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(clientCase =>
+        clientCase.clientName.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+    }
+
+    // Apply sorting
+    const sorted = sortCases(filtered)
+
+    setFilteredCases(sorted)
+  }, [cases, statusFilter, paralegalFilter, searchQuery, sortField, sortDirection, sortCases])
 
   const SortableHeader = ({ field, children, className }: { field: string, children: React.ReactNode, className?: string }) => (
     <th 
