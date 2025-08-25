@@ -116,7 +116,7 @@ class EmailService {
             </div>
             
             <h3>🔗 System Access</h3>
-            <p>You can access the system at: <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}" style="color: #ff6b35;">${process.env.NEXTAUTH_URL || 'http://localhost:3000'}</a></p>
+            <p>You can access the system at: <a href="${process.env.NEXTAUTH_URL || 'https://inegolintra.vercel.app/'}" style="color: #ff6b35;">${process.env.NEXTAUTH_URL || 'http://localhost:3000'}</a></p>
             
             <h3>📋 Next Steps</h3>
             <ol>
