@@ -12,21 +12,23 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const validatedData = passwordChangeSchema.parse(body)
+    
+    try {
+      const validatedData = passwordChangeSchema.parse(body)
+      
+      // Get current user from database
+      const user = await db.user.findUnique({
+        where: { id: authUser.id },
+        select: { password: true }
+      })
 
-    // Get current user from database
-    const user = await db.user.findUnique({
-      where: { id: authUser.id },
-      select: { password: true }
-    })
+      if (!user) {
+        return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
+      }
 
-    if (!user) {
-      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 })
-    }
-
-    // Verify current password
-    const isCurrentPasswordValid = await verifyPassword(validatedData.currentPassword, user.password)
-    if (!isCurrentPasswordValid) {
+      // Verify current password
+      const isCurrentPasswordValid = await verifyPassword(validatedData.currentPassword, user.password)
+      if (!isCurrentPasswordValid) {
       return NextResponse.json({ 
         success: false, 
         error: 'Current password is incorrect' 
@@ -60,6 +62,19 @@ export async function POST(request: NextRequest) {
       success: true, 
       message: 'Contraseña actualizada exitosamente. Se ha enviado una confirmación por correo electrónico.' 
     })
+    
+    } catch (validationError: any) {
+      // Handle Zod validation errors specifically
+      if (validationError.name === 'ZodError') {
+        const errors = validationError.errors.map((err: any) => err.message).join(', ')
+        return NextResponse.json({ 
+          success: false, 
+          error: errors 
+        }, { status: 400 })
+      }
+      throw validationError
+    }
+    
   } catch (error) {
     console.error('Password change error:', error)
     if (error instanceof Error) {
