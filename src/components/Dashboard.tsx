@@ -223,9 +223,9 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
-      <header className="bg-white shadow-sm">
+      <header className="bg-white shadow-sm flex-shrink-0">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             {/* Logo and Title */}
@@ -277,7 +277,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
 
       {/* Global Search */}
       {showSearch && (
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-gray-200 flex-shrink-0">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
             <GlobalSearch user={user} />
           </div>
@@ -285,7 +285,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       )}
 
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
+      <nav className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8 overflow-x-auto">
             {menuItems
@@ -309,12 +309,12 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       </nav>
 
       {/* Main Content */}
-      <main className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderContent()}
       </main>
 
       {/* Footer */}
-      <footer className="bg-orange-600 text-white py-8 mt-16">
+      <footer className="bg-orange-600 text-white py-8 flex-shrink-0">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="mb-4 md:mb-0">
