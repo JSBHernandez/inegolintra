@@ -61,6 +61,8 @@ model User {
   incidentReports       IncidentReport[]
   approvedPermissions   PermissionRequest[]     @relation("ApprovedByUser")
   authoredNews          News[]                  @relation("NewsAuthor")
+  userFiles             UserFile[]              @relation("UserFiles")
+  uploadedFiles         UserFile[]              @relation("FilesUploadedBy")
   
   @@index([email], map: "idx_users_email")
   @@index([role], map: "idx_users_role")
@@ -203,4 +205,26 @@ model News {
   @@index([createdAt], map: "idx_news_created")
   @@index([authorId], map: "idx_news_author")
   @@map("news")
+}
+
+// User Files Management System
+model UserFile {
+  id          Int       @id @default(autoincrement())
+  fileName    String    @db.VarChar(255)
+  fileUrl     String    @db.VarChar(500)
+  fileType    String    @db.VarChar(100)
+  fileSize    Int       // Size in bytes
+  description String?   @db.VarChar(500)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  userId      Int
+  user        User      @relation("UserFiles", fields: [userId], references: [id], onDelete: Cascade)
+  uploadedById Int?     // Who uploaded the file (admin can upload for others)
+  uploadedBy  User?     @relation("FilesUploadedBy", fields: [uploadedById], references: [id])
+  
+  @@index([userId], map: "idx_user_files_user")
+  @@index([createdAt], map: "idx_user_files_created")
+  @@map("user_files")
 }

@@ -5,6 +5,7 @@ import { useForm, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { createUserSchema, updateUserSchema, CreateUserFormData, UpdateUserFormData } from '@/lib/validations'
 import { User } from '@/types'
+import UserFiles from './UserFiles'
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([])
@@ -12,6 +13,7 @@ export default function UserManagement() {
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
+  const [showUserFiles, setShowUserFiles] = useState<User | null>(null)
 
   const createForm = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -295,6 +297,12 @@ export default function UserManagement() {
                         Edit
                       </button>
                       <button
+                        onClick={() => setShowUserFiles(user)}
+                        className="text-blue-600 hover:text-blue-900 text-sm"
+                      >
+                        Files
+                      </button>
+                      <button
                         onClick={() => handleDeleteUser(user.id)}
                         className="text-red-600 hover:text-red-900 text-sm"
                       >
@@ -495,6 +503,52 @@ export default function UserManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* User Files Modal */}
+      {showUserFiles && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden">
+                    {showUserFiles.profilePhoto ? (
+                      <img
+                        src={showUserFiles.profilePhoto}
+                        alt={showUserFiles.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-400">
+                        <span className="text-xl">👤</span>
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-gray-900">
+                      {showUserFiles.name}&apos;s Files
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      {showUserFiles.email} • {showUserFiles.position}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowUserFiles(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="max-h-[calc(90vh-80px)] overflow-y-auto">
+              <UserFiles user={showUserFiles} />
+            </div>
           </div>
         </div>
       )}

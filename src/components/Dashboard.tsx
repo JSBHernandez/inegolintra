@@ -90,6 +90,52 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               </div>
             </div>
 
+            {/* Latest News Section */}
+            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-gray-900">Latest News</h2>
+                {isAdmin && (
+                  <button
+                    onClick={() => setActiveModule('news')}
+                    className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                  >
+                    Manage →
+                  </button>
+                )}
+              </div>
+              
+              {loadingNews ? (
+                <div className="flex justify-center py-4">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
+                </div>
+              ) : news.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {news.slice(0, 6).map((article) => (
+                    <div key={article.id} className="border-l-4 border-orange-500 pl-4">
+                      <h3 className="font-semibold text-gray-900 text-lg mb-2">{article.title}</h3>
+                      <p className="text-gray-600 text-sm mb-2 line-clamp-3">{article.content}</p>
+                      <p className="text-gray-400 text-xs">
+                        {new Date(article.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-gray-500 text-center py-8">No news articles available.</p>
+              )}
+              
+              {news.length > 6 && (
+                <div className="mt-6 text-center">
+                  <button
+                    onClick={() => setActiveModule('news')}
+                    className="text-orange-600 hover:text-orange-700 font-medium"
+                  >
+                    View all {news.length} articles →
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Quick Stats */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
               {isAdmin && (
@@ -151,63 +197,20 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               </div>
             </div>
 
-            {/* Recent Activity and News Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Recent Activity */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-                <div className="space-y-3">
-                  <div className="flex items-center space-x-3 text-sm">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <span className="text-gray-600">System initialized</span>
-                    <span className="text-gray-400">Just now</span>
-                  </div>
-                  <div className="flex items-center space-x-3 text-sm">
-                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                    <span className="text-gray-600">Welcome to Inegol Intranet</span>
-                    <span className="text-gray-400">Today</span>
-                  </div>
+            {/* Recent Activity */}
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+              <div className="space-y-3">
+                <div className="flex items-center space-x-3 text-sm">
+                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-600">System initialized</span>
+                  <span className="text-gray-400">Just now</span>
                 </div>
-              </div>
-
-              {/* Latest News */}
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Latest News</h3>
-                  {isAdmin && (
-                    <button
-                      onClick={() => setActiveModule('news')}
-                      className="text-sm text-orange-600 hover:text-orange-700 font-medium"
-                    >
-                      Manage →
-                    </button>
-                  )}
+                <div className="flex items-center space-x-3 text-sm">
+                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <span className="text-gray-600">Welcome to Inegol Intranet</span>
+                  <span className="text-gray-400">Today</span>
                 </div>
-                
-                {loadingNews ? (
-                  <div className="flex justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
-                  </div>
-                ) : news.length > 0 ? (
-                  <div className="space-y-4">
-                    {news.slice(0, 3).map((article) => (
-                      <div key={article.id} className="border-l-4 border-orange-500 pl-4">
-                        <h4 className="font-medium text-gray-900 text-sm">{article.title}</h4>
-                        <p className="text-gray-600 text-xs mt-1 line-clamp-2">{article.content}</p>
-                        <p className="text-gray-400 text-xs mt-1">
-                          {new Date(article.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                    ))}
-                    {news.length > 3 && (
-                      <p className="text-sm text-gray-500 text-center pt-2">
-                        And {news.length - 3} more articles...
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">No news articles available.</p>
-                )}
               </div>
             </div>
           </div>
@@ -305,6 +308,30 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       <main className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {renderContent()}
       </main>
+
+      {/* Footer */}
+      <footer className="bg-orange-600 text-white py-8 mt-16">
+        <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center">
+            <div className="mb-4 md:mb-0">
+              <p className="text-sm">
+                © 2025 BarbaInegol Law - All rights reserved
+              </p>
+            </div>
+            <div className="flex items-center space-x-6">
+              <button
+                onClick={() => {
+                  // TODO: Future implementation - redirect to Office Policy Manual subpage
+                  console.log('Office Policy Manual - Coming Soon')
+                }}
+                className="text-orange-100 hover:text-white transition-colors text-sm font-medium underline decoration-1 underline-offset-2 hover:decoration-2"
+              >
+                Office Policy Manual
+              </button>
+            </div>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

@@ -122,6 +122,16 @@ export const updateNewsSchema = z.object({
   isActive: z.boolean().optional(),
 })
 
+// User Files Validations
+export const uploadUserFileSchema = z.object({
+  fileName: z.string().min(1, 'File name is required').max(255, 'File name is too long'),
+  fileUrl: z.string().url('Invalid file URL'),
+  fileType: z.string().min(1, 'File type is required'),
+  fileSize: z.number().int().min(1, 'File size must be greater than 0'),
+  description: z.string().max(500, 'Description is too long').optional(),
+  userId: z.number().int().min(1, 'User ID is required').optional(), // Optional for admin uploads
+})
+
 // Constants for dropdowns
 export const permissionTypeOptions = [
   { value: 'VACATION', label: 'Vacation' },
@@ -195,3 +205,4 @@ export type TrainingModuleFormData = z.infer<typeof trainingModuleSchema>
 export type PasswordChangeFormData = z.infer<typeof passwordChangeSchema>
 export type CreateNewsFormData = z.infer<typeof createNewsSchema>
 export type UpdateNewsFormData = z.infer<typeof updateNewsSchema>
+export type UploadUserFileFormData = z.infer<typeof uploadUserFileSchema>

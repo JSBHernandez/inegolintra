@@ -184,3 +184,27 @@ export interface News {
     email: string
   }
 }
+
+// User Files Management Types
+export interface UserFile {
+  id: number
+  fileName: string
+  fileUrl: string
+  fileType: string
+  fileSize: number
+  description?: string
+  createdAt: Date | string
+  updatedAt: Date | string
+  userId: number
+  user: {
+    id: number
+    name: string
+    email: string
+  }
+  uploadedById?: number
+  uploadedBy?: {
+    id: number
+    name: string
+    email: string
+  }
+}
