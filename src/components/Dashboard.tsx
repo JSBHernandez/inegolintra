@@ -10,7 +10,8 @@ import {
   TrainingModules,
   GlobalSearch,
   MyProfile,
-  NewsManagement
+  NewsManagement,
+  ImmigrationNews
 } from './index'
 
 interface DashboardProps {
@@ -54,6 +55,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     { id: 'dashboard', label: 'Dashboard', icon: '🏠', available: true },
     { id: 'client-portal', label: 'Client Portal', icon: '👥', available: isAdmin },
     { id: 'news', label: 'News', icon: '📰', available: isAdmin },
+    { id: 'immigration-news', label: 'Immigration News', icon: '🛂', available: true },
     { id: 'hr', label: 'Human Resources', icon: '📋', available: true },
     { id: 'training', label: 'Training', icon: '📚', available: true },
     { id: 'users', label: 'User Management', icon: '👤', available: isAdmin },
@@ -66,6 +68,8 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         return <ClientPortal />
       case 'news':
         return <NewsManagement user={user} />
+      case 'immigration-news':
+        return <ImmigrationNews />
       case 'users':
         return <UserManagement />
       case 'hr':
