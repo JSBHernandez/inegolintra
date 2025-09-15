@@ -194,16 +194,13 @@ export default function UserManagement() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  User
+                  User Information
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Role
+                  Contact Details
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Last Login
+                  Role & Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -214,32 +211,80 @@ export default function UserManagement() {
               {users.map((user) => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                      <div className="text-sm text-gray-500">{user.email}</div>
-                      <div className="text-xs text-gray-400">{user.position}</div>
+                    <div className="flex items-center">
+                      {/* Profile Photo */}
+                      <div className="flex-shrink-0 h-12 w-12 mr-4">
+                        {user.profilePhoto ? (
+                          <img 
+                            src={user.profilePhoto} 
+                            alt={user.name}
+                            className="h-12 w-12 rounded-full object-cover border-2 border-gray-200"
+                          />
+                        ) : (
+                          <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center">
+                            <span className="text-gray-600 font-medium text-lg">
+                              {user.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {/* User Info */}
+                      <div>
+                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                        <div className="text-sm text-gray-500">{user.email}</div>
+                        <div className="text-xs text-gray-400">{user.position}</div>
+                        {user.address && (
+                          <div className="text-xs text-gray-400 mt-1 max-w-xs truncate">
+                            📍 {user.address}
+                            {user.country && `, ${user.country}`}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.role === 'ADMIN' 
-                        ? 'bg-purple-100 text-purple-800' 
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {user.role === 'ADMIN' ? 'Administrator' : 'Agent'}
-                    </span>
+                    <div className="text-sm text-gray-900">
+                      {user.personalPhone && (
+                        <div className="flex items-center mb-1">
+                          <span className="text-gray-500 text-xs mr-2">📞</span>
+                          <span>{user.personalPhone}</span>
+                        </div>
+                      )}
+                      {user.emergencyContactName && (
+                        <div className="text-xs text-gray-600 mt-2">
+                          <div className="font-medium">Emergency Contact:</div>
+                          <div>{user.emergencyContactName}</div>
+                          {user.emergencyPhone && (
+                            <div className="flex items-center">
+                              <span className="text-gray-500 mr-1">📞</span>
+                              <span>{user.emergencyPhone}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      user.isActive 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-red-100 text-red-800'
-                    }`}>
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
+                    <div className="space-y-2">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.role === 'ADMIN' 
+                          ? 'bg-purple-100 text-purple-800' 
+                          : 'bg-blue-100 text-blue-800'
+                      }`}>
+                        {user.role === 'ADMIN' ? 'Administrator' : 'Agent'}
+                      </span>
+                      <br />
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        user.isActive 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {user.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                      <div className="text-xs text-gray-500 mt-2">
+                        Last login: {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex space-x-2">

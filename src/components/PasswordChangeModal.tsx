@@ -119,7 +119,7 @@ export default function PasswordChangeModal({ onSuccess, onCancel, isRequired }:
               <p className="mt-1 text-sm text-red-600">{errors.newPassword.message}</p>
             )}
             <p className="mt-1 text-xs text-gray-500">
-              Password must contain at least 8 characters with uppercase, lowercase, number, and special character.
+              Password must be at least 5 characters long.
             </p>
           </div>
 

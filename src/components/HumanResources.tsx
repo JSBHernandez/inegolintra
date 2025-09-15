@@ -26,6 +26,7 @@ export default function HumanResources({ user }: HumanResourcesProps) {
   const [showIncidentForm, setShowIncidentForm] = useState(false)
   const [loading, setLoading] = useState(true)
   const [submitMessage, setSubmitMessage] = useState('')
+  const [uploadingFile, setUploadingFile] = useState(false)
 
   const permissionForm = useForm<PermissionRequestFormData>({
     resolver: zodResolver(permissionRequestSchema),
@@ -136,6 +137,60 @@ export default function HumanResources({ user }: HumanResourcesProps) {
     }
   }
 
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg', 
+      'image/png',
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+      'application/vnd.ms-excel' // .xls
+    ]
+
+    if (!allowedTypes.includes(file.type)) {
+      setSubmitMessage('Please select a valid file type (JPG, JPEG, PNG, PDF, Word, Excel)')
+      return
+    }
+
+    // Validate file size (10MB limit for documents)
+    const maxSize = 10 * 1024 * 1024 // 10MB
+    if (file.size > maxSize) {
+      setSubmitMessage('File size must be less than 10MB')
+      return
+    }
+
+    setUploadingFile(true)
+
+    try {
+      const formData = new FormData()
+      formData.append('photo', file) // Using same endpoint as photo upload
+
+      const response = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        incidentForm.setValue('imageUrl', result.photoUrl)
+        setSubmitMessage('File uploaded successfully!')
+      } else {
+        setSubmitMessage(`Error uploading file: ${result.error}`)
+      }
+    } catch {
+      setSubmitMessage('Connection error while uploading file')
+    } finally {
+      setUploadingFile(false)
+    }
+  }
+
   const formatDate = (dateString: string | Date) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -160,6 +215,46 @@ export default function HumanResources({ user }: HumanResourcesProps) {
       case 'MEDIUM': return 'bg-yellow-100 text-yellow-800'
       case 'LOW': return 'bg-green-100 text-green-800'
       default: return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getFileTypeIcon = (url: string) => {
+    const extension = url.split('.').pop()?.toLowerCase()
+    switch (extension) {
+      case 'pdf':
+        return '📄'
+      case 'doc':
+      case 'docx':
+        return '📝'
+      case 'xls':
+      case 'xlsx':
+        return '📊'
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+        return '🖼️'
+      default:
+        return '📎'
+    }
+  }
+
+  const getFileTypeName = (url: string) => {
+    const extension = url.split('.').pop()?.toLowerCase()
+    switch (extension) {
+      case 'pdf':
+        return 'PDF Document'
+      case 'doc':
+      case 'docx':
+        return 'Word Document'
+      case 'xls':
+      case 'xlsx':
+        return 'Excel Spreadsheet'
+      case 'jpg':
+      case 'jpeg':
+      case 'png':
+        return 'Image'
+      default:
+        return 'File'
     }
   }
 
@@ -320,11 +415,24 @@ export default function HumanResources({ user }: HumanResourcesProps) {
                         </p>
                         <p className="text-sm text-gray-700">{incident.description}</p>
                         {incident.imageUrl && (
-                          <p className="text-sm text-blue-600 mt-2">
-                            <a href={incident.imageUrl} target="_blank" rel="noopener noreferrer">
-                              View Attachment
-                            </a>
-                          </p>
+                          <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-md">
+                            <div className="flex items-center space-x-2">
+                              <span className="text-lg">{getFileTypeIcon(incident.imageUrl)}</span>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-gray-900">
+                                  {getFileTypeName(incident.imageUrl)}
+                                </p>
+                                <a 
+                                  href={incident.imageUrl} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-sm text-blue-600 hover:text-blue-800 underline"
+                                >
+                                  View/Download File
+                                </a>
+                              </div>
+                            </div>
+                          </div>
                         )}
                         {incident.user && (
                           <p className="text-xs text-gray-500 mt-2">
@@ -529,14 +637,62 @@ export default function HumanResources({ user }: HumanResourcesProps) {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Image URL (optional)
+                  Attachment (optional)
                 </label>
-                <input
-                  type="url"
-                  {...incidentForm.register('imageUrl')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
-                  placeholder="URL to an image attachment"
-                />
+                <div className="space-y-3">
+                  {/* URL Input */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      File URL
+                    </label>
+                    <input
+                      type="url"
+                      {...incidentForm.register('imageUrl')}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      placeholder="URL to file or image"
+                    />
+                  </div>
+                  
+                  {/* File Upload */}
+                  <div>
+                    <label className="block text-xs text-gray-600 mb-1">
+                      Or upload from device
+                    </label>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx"
+                      onChange={handleFileUpload}
+                      disabled={uploadingFile}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 disabled:opacity-50"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Supported formats: JPG, JPEG, PNG, PDF, Word, Excel (Max 10MB)
+                    </p>
+                    
+                    {uploadingFile && (
+                      <div className="flex items-center mt-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
+                        <span className="text-sm text-gray-600">Uploading...</span>
+                      </div>
+                    )}
+                    
+                    {incidentForm.watch('imageUrl') && (
+                      <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                        <p className="text-sm text-green-800">
+                          ✓ File attached: 
+                          <a 
+                            href={incidentForm.watch('imageUrl')} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="ml-1 underline hover:text-green-900"
+                          >
+                            View file
+                          </a>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
                 {incidentForm.formState.errors.imageUrl && (
                   <p className="mt-1 text-sm text-red-600">{incidentForm.formState.errors.imageUrl.message}</p>
                 )}

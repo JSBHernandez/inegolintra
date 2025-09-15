@@ -39,6 +39,15 @@ export const updateUserSchema = z.object({
   isActive: z.boolean(),
 })
 
+export const updateProfileSchema = z.object({
+  address: z.string().max(500, 'Address is too long').optional().or(z.literal('')),
+  country: z.string().max(100, 'Country name is too long').optional().or(z.literal('')),
+  personalPhone: z.string().max(20, 'Phone number is too long').optional().or(z.literal('')),
+  emergencyPhone: z.string().max(20, 'Emergency phone is too long').optional().or(z.literal('')),
+  emergencyContactName: z.string().max(255, 'Emergency contact name is too long').optional().or(z.literal('')),
+  profilePhoto: z.string().url('Invalid photo URL').optional().or(z.literal('')),
+})
+
 export const loginSchema = z.object({
   username: z.string().min(1, 'Username/Email is required').optional(),
   email: z.string().min(1, 'Username/Email is required').optional(),
@@ -51,11 +60,7 @@ export const loginSchema = z.object({
 export const passwordChangeSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .regex(/[0-9]/, 'Password must contain at least one number')
-    .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character'),
+    .min(5, 'Password must be at least 5 characters'),
   confirmPassword: z.string().min(1, 'Please confirm your password'),
 }).refine((data) => data.newPassword === data.confirmPassword, {
   message: "Passwords don't match",
@@ -64,7 +69,7 @@ export const passwordChangeSchema = z.object({
 
 // HR Module Validations
 export const permissionRequestSchema = z.object({
-  requestType: z.enum(['VACATION', 'SICK_LEAVE', 'PERSONAL_LEAVE', 'MATERNITY_LEAVE', 'PATERNITY_LEAVE', 'OTHER']),
+  requestType: z.enum(['VACATION', 'SICK_LEAVE', 'PERSONAL_LEAVE', 'MATERNITY_LEAVE', 'PATERNITY_LEAVE', 'PTO', 'OTHER']),
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
   reason: z.string().min(10, 'Please provide a detailed reason (minimum 10 characters)').max(1000, 'Reason is too long'),
@@ -103,6 +108,20 @@ export const trainingModuleSchema = z.object({
   order: z.number().int().min(0),
 })
 
+// News Validations
+export const createNewsSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
+  content: z.string().min(10, 'Content must be at least 10 characters').max(5000, 'Content is too long'),
+  imageUrl: z.string().url('Invalid image URL').optional().or(z.literal('')),
+})
+
+export const updateNewsSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255, 'Title is too long').optional(),
+  content: z.string().min(10, 'Content must be at least 10 characters').max(5000, 'Content is too long').optional(),
+  imageUrl: z.string().url('Invalid image URL').optional().or(z.literal('')),
+  isActive: z.boolean().optional(),
+})
+
 // Constants for dropdowns
 export const permissionTypeOptions = [
   { value: 'VACATION', label: 'Vacation' },
@@ -110,6 +129,7 @@ export const permissionTypeOptions = [
   { value: 'PERSONAL_LEAVE', label: 'Personal Leave' },
   { value: 'MATERNITY_LEAVE', label: 'Maternity Leave' },
   { value: 'PATERNITY_LEAVE', label: 'Paternity Leave' },
+  { value: 'PTO', label: 'PTO (Paid Time Off)' },
   { value: 'OTHER', label: 'Other' },
 ] as const
 
@@ -139,10 +159,39 @@ export const trainingCategoryOptions = [
   { value: 'OTHER', label: 'Other' },
 ] as const
 
+// Countries list
+export const countryOptions = [
+  'United States',
+  'Canada',
+  'Mexico',
+  'United Kingdom',
+  'Germany',
+  'France',
+  'Spain',
+  'Italy',
+  'Japan',
+  'South Korea',
+  'China',
+  'India',
+  'Brazil',
+  'Argentina',
+  'Colombia',
+  'Venezuela',
+  'Ecuador',
+  'Peru',
+  'Chile',
+  'Australia',
+  'New Zealand',
+  'Other'
+] as const
+
 export type CreateUserFormData = z.infer<typeof createUserSchema>
 export type UpdateUserFormData = z.infer<typeof updateUserSchema>
+export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>
 export type LoginFormData = z.infer<typeof loginSchema>
 export type PermissionRequestFormData = z.infer<typeof permissionRequestSchema>
 export type IncidentReportFormData = z.infer<typeof incidentReportSchema>
 export type TrainingModuleFormData = z.infer<typeof trainingModuleSchema>
 export type PasswordChangeFormData = z.infer<typeof passwordChangeSchema>
+export type CreateNewsFormData = z.infer<typeof createNewsSchema>
+export type UpdateNewsFormData = z.infer<typeof updateNewsSchema>

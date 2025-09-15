@@ -43,6 +43,14 @@ export interface User {
   lastLogin?: Date | string
   createdAt: Date | string
   updatedAt: Date | string
+  
+  // Profile Information
+  address?: string
+  country?: string
+  personalPhone?: string
+  emergencyPhone?: string
+  emergencyContactName?: string
+  profilePhoto?: string
 }
 
 export type UserRole = 'ADMIN' | 'AGENT'
@@ -78,6 +86,7 @@ export type PermissionType =
   | 'PERSONAL_LEAVE'
   | 'MATERNITY_LEAVE'
   | 'PATERNITY_LEAVE'
+  | 'PTO'
   | 'OTHER'
 
 export type RequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
@@ -143,10 +152,35 @@ export interface AuthUser {
   position: string
   role: UserRole
   mustChangePassword: boolean
+  
+  // Profile Information
+  address?: string
+  country?: string
+  personalPhone?: string
+  emergencyPhone?: string
+  emergencyContactName?: string
+  profilePhoto?: string
 }
 
 export interface PasswordChangeData {
   currentPassword: string
   newPassword: string
   confirmPassword: string
+}
+
+// News Management Types
+export interface News {
+  id: number
+  title: string
+  content: string
+  imageUrl?: string
+  isActive: boolean
+  createdAt: Date | string
+  updatedAt: Date | string
+  authorId: number
+  author: {
+    id: number
+    name: string
+    email: string
+  }
 }

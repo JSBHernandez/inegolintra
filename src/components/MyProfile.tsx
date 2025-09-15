@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AuthUser } from '@/types'
+import { countryOptions } from '@/lib/validations'
 
 interface MyProfileProps {
   user: AuthUser
@@ -14,11 +15,26 @@ interface PasswordChangeForm {
   confirmPassword: string
 }
 
+interface ProfileForm {
+  address: string
+  country: string
+  personalPhone: string
+  emergencyPhone: string
+  emergencyContactName: string
+  profilePhoto: string
+}
+
 export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
   const [showPasswordChange, setShowPasswordChange] = useState(false)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
+  
+  // Profile editing state
+  const [isEditingProfile, setIsEditingProfile] = useState(false)
+  const [profileLoading, setProfileLoading] = useState(false)
+  const [profileMessage, setProfileMessage] = useState('')
+  const [profileError, setProfileError] = useState('')
 
   // Password visibility states
   const [showCurrentPassword, setShowCurrentPassword] = useState(false)
@@ -31,18 +47,14 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
     confirmPassword: ''
   })
 
-  // Password validation functions
-  const getPasswordRequirements = (password: string) => {
-    return {
-      minLength: password.length >= 8,
-      hasUppercase: /[A-Z]/.test(password),
-      hasLowercase: /[a-z]/.test(password),
-      hasNumber: /[0-9]/.test(password),
-      hasSpecialChar: /[^A-Za-z0-9]/.test(password),
-    }
-  }
-
-  const passwordRequirements = getPasswordRequirements(passwordForm.newPassword)
+  const [profileForm, setProfileForm] = useState<ProfileForm>({
+    address: user.address || '',
+    country: user.country || '',
+    personalPhone: user.personalPhone || '',
+    emergencyPhone: user.emergencyPhone || '',
+    emergencyContactName: user.emergencyContactName || '',
+    profilePhoto: user.profilePhoto || ''
+  })
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,25 +67,8 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
     }
 
     // Validate password requirements
-    const requirements = getPasswordRequirements(passwordForm.newPassword)
-    if (!requirements.minLength) {
-      setError('Password must be at least 8 characters long')
-      return
-    }
-    if (!requirements.hasUppercase) {
-      setError('Password must contain at least one uppercase letter')
-      return
-    }
-    if (!requirements.hasLowercase) {
-      setError('Password must contain at least one lowercase letter')
-      return
-    }
-    if (!requirements.hasNumber) {
-      setError('Password must contain at least one number')
-      return
-    }
-    if (!requirements.hasSpecialChar) {
-      setError('Password must contain at least one special character')
+    if (passwordForm.newPassword.length < 5) {
+      setError('Password must be at least 5 characters long')
       return
     }
 
@@ -110,6 +105,82 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
       setError('Connection error. Please try again.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Handle profile update
+  const handleProfileUpdate = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setProfileError('')
+    setProfileMessage('')
+    setProfileLoading(true)
+
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(profileForm),
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setProfileMessage('Profile updated successfully!')
+        setIsEditingProfile(false)
+        // You might want to refresh user data here
+      } else {
+        setProfileError(result.error || 'Error updating profile')
+      }
+    } catch {
+      setProfileError('Connection error. Please try again.')
+    } finally {
+      setProfileLoading(false)
+    }
+  }
+
+  // Handle photo upload
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setProfileError('Please select an image file (JPG or PNG)')
+      return
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setProfileError('File size must be less than 5MB')
+      return
+    }
+
+    setProfileLoading(true)
+    setProfileError('')
+
+    try {
+      const formData = new FormData()
+      formData.append('photo', file)
+
+      const response = await fetch('/api/upload-photo', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setProfileForm(prev => ({ ...prev, profilePhoto: result.photoUrl }))
+        setProfileMessage('Photo uploaded successfully!')
+      } else {
+        setProfileError(result.error || 'Error uploading photo')
+      }
+    } catch {
+      setProfileError('Connection error. Please try again.')
+    } finally {
+      setProfileLoading(false)
     }
   }
 
@@ -213,6 +284,205 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
         </div>
       </div>
 
+      {/* Profile Information */}
+      <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Additional Profile Information</h3>
+          <button
+            onClick={() => setIsEditingProfile(!isEditingProfile)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+          >
+            {isEditingProfile ? 'Cancel' : 'Edit Profile'}
+          </button>
+        </div>
+
+        {/* Messages */}
+        {profileMessage && (
+          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md mb-4">
+            {profileMessage}
+          </div>
+        )}
+
+        {profileError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+            {profileError}
+          </div>
+        )}
+
+        <form onSubmit={handleProfileUpdate}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Profile Photo */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Profile Photo
+              </label>
+              <div className="flex items-center space-x-4">
+                {profileForm.profilePhoto && (
+                  <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200">
+                    <img 
+                      src={profileForm.profilePhoto} 
+                      alt="Profile" 
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                {isEditingProfile ? (
+                  <div>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/jpg,image/png"
+                      onChange={handlePhotoUpload}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">JPG or PNG, max 5MB</p>
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-500">
+                    {profileForm.profilePhoto ? 'Photo uploaded' : 'No photo uploaded'}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Address */}
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Address
+              </label>
+              {isEditingProfile ? (
+                <textarea
+                  value={profileForm.address}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, address: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  rows={3}
+                  placeholder="Enter your full address"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md min-h-[80px]">
+                  {profileForm.address || 'No address provided'}
+                </div>
+              )}
+            </div>
+
+            {/* Country */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Country
+              </label>
+              {isEditingProfile ? (
+                <select
+                  value={profileForm.country}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, country: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="">Select a country</option>
+                  {countryOptions.map(country => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
+              ) : (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+                  {profileForm.country || 'No country selected'}
+                </div>
+              )}
+            </div>
+
+            {/* Personal Phone */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Personal Phone
+              </label>
+              {isEditingProfile ? (
+                <input
+                  type="tel"
+                  value={profileForm.personalPhone}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, personalPhone: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter your phone number"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+                  {profileForm.personalPhone || 'No phone number provided'}
+                </div>
+              )}
+            </div>
+
+            {/* Emergency Contact Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Emergency Contact Name
+              </label>
+              {isEditingProfile ? (
+                <input
+                  type="text"
+                  value={profileForm.emergencyContactName}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, emergencyContactName: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter emergency contact name"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+                  {profileForm.emergencyContactName || 'No emergency contact provided'}
+                </div>
+              )}
+            </div>
+
+            {/* Emergency Phone */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Emergency Phone
+              </label>
+              {isEditingProfile ? (
+                <input
+                  type="tel"
+                  value={profileForm.emergencyPhone}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, emergencyPhone: e.target.value }))}
+                  className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Enter emergency contact phone"
+                />
+              ) : (
+                <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+                  {profileForm.emergencyPhone || 'No emergency phone provided'}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Save button - only show when editing */}
+          {isEditingProfile && (
+            <div className="mt-6 flex items-center space-x-4">
+              <button
+                type="submit"
+                disabled={profileLoading}
+                className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
+              >
+                {profileLoading ? 'Saving...' : 'Save Profile'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsEditingProfile(false)
+                  // Reset form to original values
+                  setProfileForm({
+                    address: user.address || '',
+                    country: user.country || '',
+                    personalPhone: user.personalPhone || '',
+                    emergencyPhone: user.emergencyPhone || '',
+                    emergencyContactName: user.emergencyContactName || '',
+                    profilePhoto: user.profilePhoto || ''
+                  })
+                  setProfileError('')
+                  setProfileMessage('')
+                }}
+                className="bg-gray-300 text-gray-700 px-6 py-2 rounded-md hover:bg-gray-400 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </form>
+      </div>
+
       {/* Security Settings */}
       <div className="bg-white rounded-lg shadow-sm p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-6">Security Settings</h3>
@@ -302,25 +572,9 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
                   <div className="mt-3 p-3 bg-gray-100 rounded-md">
                     <p className="text-sm font-medium text-gray-700 mb-2">Password Requirements:</p>
                     <div className="space-y-1">
-                      <div className={`flex items-center text-xs ${passwordRequirements.minLength ? 'text-green-600' : 'text-red-600'}`}>
-                        <span className="mr-2">{passwordRequirements.minLength ? '✓' : '✗'}</span>
-                        At least 8 characters
-                      </div>
-                      <div className={`flex items-center text-xs ${passwordRequirements.hasUppercase ? 'text-green-600' : 'text-red-600'}`}>
-                        <span className="mr-2">{passwordRequirements.hasUppercase ? '✓' : '✗'}</span>
-                        One uppercase letter (A-Z)
-                      </div>
-                      <div className={`flex items-center text-xs ${passwordRequirements.hasLowercase ? 'text-green-600' : 'text-red-600'}`}>
-                        <span className="mr-2">{passwordRequirements.hasLowercase ? '✓' : '✗'}</span>
-                        One lowercase letter (a-z)
-                      </div>
-                      <div className={`flex items-center text-xs ${passwordRequirements.hasNumber ? 'text-green-600' : 'text-red-600'}`}>
-                        <span className="mr-2">{passwordRequirements.hasNumber ? '✓' : '✗'}</span>
-                        One number (0-9)
-                      </div>
-                      <div className={`flex items-center text-xs ${passwordRequirements.hasSpecialChar ? 'text-green-600' : 'text-red-600'}`}>
-                        <span className="mr-2">{passwordRequirements.hasSpecialChar ? '✓' : '✗'}</span>
-                        One special character (!@#$%^&*()_+-=[]{}|;:,.)
+                      <div className={`flex items-center text-xs ${passwordForm.newPassword.length >= 5 ? 'text-green-600' : 'text-red-600'}`}>
+                        <span className="mr-2">{passwordForm.newPassword.length >= 5 ? '✓' : '✗'}</span>
+                        At least 5 characters
                       </div>
                     </div>
                   </div>

@@ -48,10 +48,19 @@ model User {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   
+  // Profile Information
+  address               String?                 @db.VarChar(500)
+  country               String?                 @db.VarChar(100)
+  personalPhone         String?                 @db.VarChar(20)
+  emergencyPhone        String?                 @db.VarChar(20)
+  emergencyContactName  String?                 @db.VarChar(255)
+  profilePhoto          String?                 @db.VarChar(500)
+  
   // Relations
   permissionRequests    PermissionRequest[]
   incidentReports       IncidentReport[]
   approvedPermissions   PermissionRequest[]     @relation("ApprovedByUser")
+  authoredNews          News[]                  @relation("NewsAuthor")
   
   @@index([email], map: "idx_users_email")
   @@index([role], map: "idx_users_role")
@@ -133,6 +142,7 @@ enum PermissionType {
   PERSONAL_LEAVE
   MATERNITY_LEAVE
   PATERNITY_LEAVE
+  PTO
   OTHER
 }
 
@@ -173,4 +183,24 @@ enum TrainingCategory {
   COMPLIANCE
   SAFETY
   OTHER
+}
+
+// News Management System
+model News {
+  id          Int       @id @default(autoincrement())
+  title       String    @db.VarChar(255)
+  content     String    @db.Text
+  imageUrl    String?   @db.VarChar(500)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  authorId    Int
+  author      User      @relation("NewsAuthor", fields: [authorId], references: [id], onDelete: Cascade)
+  
+  @@index([isActive], map: "idx_news_active")
+  @@index([createdAt], map: "idx_news_created")
+  @@index([authorId], map: "idx_news_author")
+  @@map("news")
 }

@@ -1,15 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { AuthUser } from '@/types'
+import { AuthUser, News } from '@/types'
 import { 
   ClientPortal,
   UserManagement,
   HumanResources,
   TrainingModules,
   GlobalSearch,
-  MyProfile
+  MyProfile,
+  NewsManagement
 } from './index'
 
 interface DashboardProps {
@@ -20,6 +21,28 @@ interface DashboardProps {
 export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [activeModule, setActiveModule] = useState<string>('dashboard')
   const [showSearch, setShowSearch] = useState(false)
+  const [news, setNews] = useState<News[]>([])
+  const [loadingNews, setLoadingNews] = useState(true)
+
+  // Fetch active news on component mount
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        const response = await fetch('/api/news')
+        const result = await response.json()
+        
+        if (result.success) {
+          setNews(result.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch news:', error)
+      } finally {
+        setLoadingNews(false)
+      }
+    }
+
+    fetchNews()
+  }, [])
 
   if (!user) {
     return null
@@ -30,6 +53,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '🏠', available: true },
     { id: 'client-portal', label: 'Client Portal', icon: '👥', available: isAdmin },
+    { id: 'news', label: 'News', icon: '📰', available: isAdmin },
     { id: 'hr', label: 'Human Resources', icon: '📋', available: true },
     { id: 'training', label: 'Training', icon: '📚', available: true },
     { id: 'users', label: 'User Management', icon: '👤', available: isAdmin },
@@ -40,6 +64,8 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     switch (activeModule) {
       case 'client-portal':
         return <ClientPortal />
+      case 'news':
+        return <NewsManagement user={user} />
       case 'users':
         return <UserManagement />
       case 'hr':
@@ -125,20 +151,63 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               </div>
             </div>
 
-            {/* Recent Activity */}
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3 text-sm">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-600">System initialized</span>
-                  <span className="text-gray-400">Just now</span>
+            {/* Recent Activity and News Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Recent Activity */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Activity</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3 text-sm">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span className="text-gray-600">System initialized</span>
+                    <span className="text-gray-400">Just now</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-sm">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span className="text-gray-600">Welcome to Inegol Intranet</span>
+                    <span className="text-gray-400">Today</span>
+                  </div>
                 </div>
-                <div className="flex items-center space-x-3 text-sm">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                  <span className="text-gray-600">Welcome to Inegol Intranet</span>
-                  <span className="text-gray-400">Today</span>
+              </div>
+
+              {/* Latest News */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Latest News</h3>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setActiveModule('news')}
+                      className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                    >
+                      Manage →
+                    </button>
+                  )}
                 </div>
+                
+                {loadingNews ? (
+                  <div className="flex justify-center py-4">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
+                  </div>
+                ) : news.length > 0 ? (
+                  <div className="space-y-4">
+                    {news.slice(0, 3).map((article) => (
+                      <div key={article.id} className="border-l-4 border-orange-500 pl-4">
+                        <h4 className="font-medium text-gray-900 text-sm">{article.title}</h4>
+                        <p className="text-gray-600 text-xs mt-1 line-clamp-2">{article.content}</p>
+                        <p className="text-gray-400 text-xs mt-1">
+                          {new Date(article.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    ))}
+                    {news.length > 3 && (
+                      <p className="text-sm text-gray-500 text-center pt-2">
+                        And {news.length - 3} more articles...
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No news articles available.</p>
+                )}
               </div>
             </div>
           </div>
