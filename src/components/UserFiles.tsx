@@ -70,10 +70,10 @@ export default function UserFiles({ user }: UserFilesProps) {
       return
     }
 
-    // Validate file size (15MB limit for user files)
-    const maxSize = 15 * 1024 * 1024 // 15MB
+    // Validate file size (2MB limit for deployment compatibility)
+    const maxSize = 2 * 1024 * 1024 // 2MB
     if (file.size > maxSize) {
-      setSubmitMessage('File size must be less than 15MB')
+      setSubmitMessage('File size must be less than 2MB for deployment compatibility')
       return
     }
 
@@ -226,7 +226,7 @@ export default function UserFiles({ user }: UserFilesProps) {
             Your Files ({files.length})
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Recommended format: PDF. Supported: JPG, PNG, PDF, Word, Excel (Max 15MB)
+            Recommended format: PDF. Supported: JPG, PNG, PDF, Word, Excel (Max 2MB - deployment optimized)
           </p>
         </div>
         
@@ -314,7 +314,7 @@ export default function UserFiles({ user }: UserFilesProps) {
                   className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 disabled:opacity-50"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Supported: JPG, PNG, PDF, Word, Excel (Max 15MB) - <strong>PDF is recommended</strong>
+                  Supported: JPG, PNG, PDF, Word, Excel (Max 2MB - deployment optimized) - <strong>PDF is recommended</strong>
                 </p>
                 
                 {uploadingFile && (

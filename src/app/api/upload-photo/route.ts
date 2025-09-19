@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/auth'
-import { writeFile } from 'fs/promises'
-import { join } from 'path'
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,36 +20,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'File must be an image' }, { status: 400 })
     }
 
-    // Validate file size (5MB max)
-    if (file.size > 5 * 1024 * 1024) {
-      return NextResponse.json({ success: false, error: 'File size must be less than 5MB' }, { status: 400 })
+    // Validate file size (2MB max for base64 storage)
+    if (file.size > 2 * 1024 * 1024) {
+      return NextResponse.json({ success: false, error: 'File size must be less than 2MB for deployment compatibility' }, { status: 400 })
     }
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
-
-    // Create unique filename
-    const timestamp = Date.now()
-    const extension = file.name.split('.').pop()
-    const filename = `profile-${authUser.id}-${timestamp}.${extension}`
-    const filepath = join(process.cwd(), 'public', 'uploads', filename)
-
-    // Ensure uploads directory exists
-    const { mkdir } = await import('fs/promises')
-    const uploadsDir = join(process.cwd(), 'public', 'uploads')
-    try {
-      await mkdir(uploadsDir, { recursive: true })
-    } catch (error) {
-      // Directory already exists
-    }
-
-    await writeFile(filepath, buffer)
-
-    const photoUrl = `/uploads/${filename}`
+    
+    // Convert to base64 for database storage (deployment-safe)
+    const base64String = buffer.toString('base64')
+    const mimeType = file.type
+    const dataUrl = `data:${mimeType};base64,${base64String}`
 
     return NextResponse.json({ 
       success: true, 
-      photoUrl: photoUrl
+      photoUrl: dataUrl
     })
 
   } catch (error) {

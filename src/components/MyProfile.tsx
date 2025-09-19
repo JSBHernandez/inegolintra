@@ -120,8 +120,8 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        setProfileError('Profile photo must be less than 5MB')
+      if (file.size > 2 * 1024 * 1024) { // 2MB limit for deployment
+        setProfileError('Profile photo must be less than 2MB for deployment compatibility')
         return
       }
 
@@ -348,7 +348,7 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
                             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                           />
                           <p className="mt-1 text-xs text-gray-500">
-                            Upload a photo (max 5MB, JPG/PNG)
+                            Upload a photo (max 2MB, JPG/PNG - deployment optimized)
                           </p>
                         </div>
                       )}

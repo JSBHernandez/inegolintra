@@ -125,9 +125,9 @@ export default function NewsManagement({ user: _user }: NewsManagementProps) {
       return
     }
 
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      setSubmitMessage('File size must be less than 5MB')
+    // Validate file size (2MB for deployment compatibility)
+    if (file.size > 2 * 1024 * 1024) {
+      setSubmitMessage('File size must be less than 2MB for deployment compatibility')
       return
     }
 
@@ -343,7 +343,7 @@ export default function NewsManagement({ user: _user }: NewsManagementProps) {
                     disabled={uploadingImage}
                     className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100"
                   />
-                  <p className="text-xs text-gray-500">JPG or PNG, max 5MB</p>
+                  <p className="text-xs text-gray-500">JPG or PNG, max 2MB (deployment optimized)</p>
                   
                   {createForm.watch('imageUrl') && (
                     <div className="mt-2">

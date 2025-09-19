@@ -158,10 +158,10 @@ export default function HumanResources({ user }: HumanResourcesProps) {
       return
     }
 
-    // Validate file size (10MB limit for documents)
-    const maxSize = 10 * 1024 * 1024 // 10MB
+    // Validate file size (2MB limit for deployment compatibility)
+    const maxSize = 2 * 1024 * 1024 // 2MB
     if (file.size > maxSize) {
-      setSubmitMessage('File size must be less than 10MB')
+      setSubmitMessage('File size must be less than 2MB for deployment compatibility')
       return
     }
 
@@ -666,7 +666,7 @@ export default function HumanResources({ user }: HumanResourcesProps) {
                       className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 disabled:opacity-50"
                     />
                     <p className="text-xs text-gray-500 mt-1">
-                      Supported formats: JPG, JPEG, PNG, PDF, Word, Excel (Max 10MB)
+                      Supported formats: JPG, JPEG, PNG, PDF, Word, Excel (Max 2MB - deployment optimized)
                     </p>
                     
                     {uploadingFile && (

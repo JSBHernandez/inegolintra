@@ -45,7 +45,10 @@ export const updateProfileSchema = z.object({
   personalPhone: z.string().max(20, 'Phone number is too long').optional().or(z.literal('')),
   emergencyPhone: z.string().max(20, 'Emergency phone is too long').optional().or(z.literal('')),
   emergencyContactName: z.string().max(255, 'Emergency contact name is too long').optional().or(z.literal('')),
-  profilePhoto: z.string().url('Invalid photo URL').optional().or(z.literal('')),
+  profilePhoto: z.string().refine(
+    (val) => val === '' || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:'),
+    'Invalid photo URL or data format'
+  ).optional().or(z.literal('')),
 })
 
 export const loginSchema = z.object({
@@ -112,13 +115,19 @@ export const trainingModuleSchema = z.object({
 export const createNewsSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
   content: z.string().min(10, 'Content must be at least 10 characters').max(5000, 'Content is too long'),
-  imageUrl: z.string().url('Invalid image URL').optional().or(z.literal('')),
+  imageUrl: z.string().refine(
+    (val) => val === '' || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:'),
+    'Invalid image URL or data format'
+  ).optional().or(z.literal('')),
 })
 
 export const updateNewsSchema = z.object({
   title: z.string().min(1, 'Title is required').max(255, 'Title is too long').optional(),
   content: z.string().min(10, 'Content must be at least 10 characters').max(5000, 'Content is too long').optional(),
-  imageUrl: z.string().url('Invalid image URL').optional().or(z.literal('')),
+  imageUrl: z.string().refine(
+    (val) => val === '' || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:'),
+    'Invalid image URL or data format'
+  ).optional().or(z.literal('')),
   isActive: z.boolean().optional(),
 })
 
