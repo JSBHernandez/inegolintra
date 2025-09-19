@@ -113,11 +113,30 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
                 </div>
               ) : news.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="space-y-4">
                   {news.slice(0, 6).map((article) => (
-                    <div key={article.id} className="border-l-4 border-orange-500 pl-4">
+                    <div key={article.id} className="border-l-4 border-orange-500 pl-4 p-4 border rounded-lg hover:bg-gray-50">
                       <h3 className="font-semibold text-gray-900 text-lg mb-2">{article.title}</h3>
-                      <p className="text-gray-600 text-sm mb-2 line-clamp-3">{article.content}</p>
+                      <p className="text-gray-600 text-sm mb-3 line-clamp-3">{article.content}</p>
+                      
+                      {article.imageUrl && (
+                        <div className="mb-3">
+                          <img 
+                            src={article.imageUrl} 
+                            alt={article.title}
+                            className="h-20 w-auto rounded-md object-cover"
+                            onError={(e) => console.error('Dashboard image load error:', e, 'URL:', article.imageUrl)}
+                            onLoad={() => console.log('Dashboard image loaded successfully:', article.title)}
+                          />
+                        </div>
+                      )}
+                      
+                      {!article.imageUrl && (
+                        <div className="mb-3 text-xs text-gray-400">
+                          No image available
+                        </div>
+                      )}
+                      
                       <p className="text-gray-400 text-xs">
                         {new Date(article.createdAt).toLocaleDateString()}
                       </p>

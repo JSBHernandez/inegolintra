@@ -242,7 +242,15 @@ export default function NewsManagement({ user: _user }: NewsManagementProps) {
                         src={article.imageUrl} 
                         alt={article.title}
                         className="h-24 w-auto rounded-md object-cover"
+                        onError={(e) => console.error('Image load error:', e, 'URL:', article.imageUrl)}
+                        onLoad={() => console.log('Image loaded successfully:', article.title)}
                       />
+                    </div>
+                  )}
+                  
+                  {!article.imageUrl && (
+                    <div className="mb-3 text-xs text-gray-400">
+                      No image available
                     </div>
                   )}
                   
