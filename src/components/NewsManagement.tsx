@@ -218,14 +218,14 @@ export default function NewsManagement({ user: _user }: NewsManagementProps) {
           </h3>
         </div>
         
-        <div className="divide-y divide-gray-200">
-          {news.map((article) => (
-            <div key={article.id} className="p-6 hover:bg-gray-50">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-2">
-                    <h4 className="text-lg font-medium text-gray-900">{article.title}</h4>
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+        <div className="p-6">
+          <div className="space-y-6">
+            {news.map((article) => (
+              <div key={article.id} className="bg-white rounded-lg shadow-sm p-6 border">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-3">
+                    <h4 className="text-2xl font-bold text-gray-900">{article.title}</h4>
+                    <span className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${
                       article.isActive 
                         ? 'bg-green-100 text-green-800' 
                         : 'bg-red-100 text-red-800'
@@ -234,61 +234,59 @@ export default function NewsManagement({ user: _user }: NewsManagementProps) {
                     </span>
                   </div>
                   
-                  <p className="text-gray-600 mb-3 line-clamp-3">{article.content}</p>
-                  
-                  {article.imageUrl && (
-                    <div className="mb-3">
-                      <img 
-                        src={article.imageUrl} 
-                        alt={article.title}
-                        className="h-24 w-auto rounded-md object-cover"
-                        onError={(e) => console.error('Image load error:', e, 'URL:', article.imageUrl)}
-                        onLoad={() => console.log('Image loaded successfully:', article.title)}
-                      />
-                    </div>
-                  )}
-                  
-                  {!article.imageUrl && (
-                    <div className="mb-3 text-xs text-gray-400">
-                      No image available
-                    </div>
-                  )}
-                  
-                  <div className="text-sm text-gray-500">
-                    Created by {article.author.name} on {formatDate(article.createdAt)}
-                    {article.updatedAt !== article.createdAt && (
-                      <span> • Updated {formatDate(article.updatedAt)}</span>
-                    )}
+                  <div className="flex space-x-2 ml-4">
+                    <button
+                      onClick={() => handleToggleActive(article.id, article.isActive)}
+                      className={`px-4 py-2 text-sm rounded-md font-medium ${
+                        article.isActive
+                          ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
+                          : 'bg-green-100 text-green-800 hover:bg-green-200'
+                      }`}
+                    >
+                      {article.isActive ? 'Deactivate' : 'Activate'}
+                    </button>
+                    <button
+                      onClick={() => handleDeleteNews(article.id)}
+                      className="px-4 py-2 text-sm bg-red-100 text-red-800 rounded-md hover:bg-red-200 font-medium"
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
                 
-                <div className="flex space-x-2 ml-4">
-                  <button
-                    onClick={() => handleToggleActive(article.id, article.isActive)}
-                    className={`px-3 py-1 text-sm rounded-md ${
-                      article.isActive
-                        ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200'
-                        : 'bg-green-100 text-green-800 hover:bg-green-200'
-                    }`}
-                  >
-                    {article.isActive ? 'Deactivate' : 'Activate'}
-                  </button>
-                  <button
-                    onClick={() => handleDeleteNews(article.id)}
-                    className="px-3 py-1 text-sm bg-red-100 text-red-800 rounded-md hover:bg-red-200"
-                  >
-                    Delete
-                  </button>
+                <p className="text-gray-600 mb-4 text-base leading-relaxed">{article.content}</p>
+                
+                {article.imageUrl && (
+                  <div className="mb-4">
+                    <img 
+                      src={article.imageUrl} 
+                      alt={article.title}
+                      className="max-w-md h-auto rounded-lg object-cover shadow-sm border"
+                      style={{ maxHeight: '300px' }}
+                      onError={(e) => console.error('NewsManagement image load error:', article.title)}
+                      onLoad={() => console.log('NewsManagement image loaded successfully:', article.title)}
+                    />
+                  </div>
+                )}
+                
+                <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+                  <span>Created by {article.author.name} on {formatDate(article.createdAt)}</span>
+                  {article.updatedAt !== article.createdAt && (
+                    <>
+                      <span>•</span>
+                      <span>Updated {formatDate(article.updatedAt)}</span>
+                    </>
+                  )}
                 </div>
               </div>
-            </div>
-          ))}
-          
-          {news.length === 0 && (
-            <div className="p-8 text-center text-gray-500">
-              No news articles created yet. Click &quot;Create News&quot; to add the first article.
-            </div>
-          )}
+            ))}
+            
+            {news.length === 0 && (
+              <div className="p-8 text-center text-gray-500">
+                No news articles created yet. Click &quot;Create News&quot; to add the first article.
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
