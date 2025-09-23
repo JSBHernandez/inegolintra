@@ -13,13 +13,7 @@ export const clientCaseSchema = z.object({
   status: z.enum(['Active', 'Completed']),
   notes: z.string().optional(),
   totalContract: z.number().positive('Total contract must be a positive number').optional(),
-  paralegal: z.union([
-    z.string().refine(val => paralegalOptions.includes(val as typeof paralegalOptions[number]), {
-      message: 'Invalid paralegal selection'
-    }),
-    z.literal(''),
-    z.undefined()
-  ]).optional(),
+  paralegal: z.string().max(100, 'Paralegal name is too long').optional().or(z.literal('')),
 })
 
 export type ClientCaseFormData = z.infer<typeof clientCaseSchema>

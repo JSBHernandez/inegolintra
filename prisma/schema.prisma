@@ -228,3 +228,16 @@ model UserFile {
   @@index([createdAt], map: "idx_user_files_created")
   @@map("user_files")
 }
+
+// Paralegal Management System
+model Paralegal {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique @db.VarChar(100)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  
+  @@index([isActive], map: "idx_paralegals_active")
+  @@index([name], map: "idx_paralegals_name")
+  @@map("paralegals")
+}

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ClientCase } from '@/types'
-import { clientCaseSchema, ClientCaseFormData, paralegalOptions } from '@/lib/validations'
+import { clientCaseSchema, ClientCaseFormData } from '@/lib/validations'
 
 interface WebkitStyle extends React.CSSProperties {
   WebkitTextFillColor?: string
@@ -19,6 +19,7 @@ interface ClientCaseFormProps {
 export default function ClientCaseForm({ onSuccess, editingCase, onCancelEdit }: ClientCaseFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
+  const [paralegals, setParalegals] = useState<string[]>([])
   const isEditing = !!editingCase
 
   const {
@@ -33,6 +34,24 @@ export default function ClientCaseForm({ onSuccess, editingCase, onCancelEdit }:
       status: 'Active'
     }
   })
+
+  // Fetch active paralegals
+  useEffect(() => {
+    const fetchParalegals = async () => {
+      try {
+        const response = await fetch('/api/paralegals/active')
+        const result = await response.json()
+        
+        if (result.success) {
+          setParalegals(result.data)
+        }
+      } catch (error) {
+        console.error('Failed to fetch paralegals:', error)
+      }
+    }
+
+    fetchParalegals()
+  }, [])
 
   // Load data when editing
   useEffect(() => {
@@ -214,7 +233,7 @@ export default function ClientCaseForm({ onSuccess, editingCase, onCancelEdit }:
             } as WebkitStyle}
           >
             <option value="">Select paralegal (optional)</option>
-            {paralegalOptions.map((paralegal) => (
+            {paralegals.map((paralegal) => (
               <option key={paralegal} value={paralegal}>
                 {paralegal}
               </option>

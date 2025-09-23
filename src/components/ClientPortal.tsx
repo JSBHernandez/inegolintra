@@ -2,12 +2,14 @@
 
 import { useState } from 'react'
 import { ClientCaseForm, ClientCasesList } from './index'
+import ParalegalManager from './ParalegalManager'
 import { ClientCase } from '@/types'
 
 export default function ClientPortal() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [editingCase, setEditingCase] = useState<ClientCase | null>(null)
   const [showFormModal, setShowFormModal] = useState(false)
+  const [showParalegalManager, setShowParalegalManager] = useState(false)
 
   const handleFormSuccess = () => {
     setRefreshTrigger(prev => prev + 1)
@@ -51,6 +53,7 @@ export default function ClientPortal() {
       <ClientCasesList 
         refreshTrigger={refreshTrigger}
         onEdit={handleEditCase}
+        onManageParalegals={() => setShowParalegalManager(true)}
       />
 
       {/* Form Modal */}
@@ -84,6 +87,12 @@ export default function ClientPortal() {
           </div>
         </div>
       )}
+
+      {/* Paralegal Manager Modal */}
+      <ParalegalManager
+        isOpen={showParalegalManager}
+        onClose={() => setShowParalegalManager(false)}
+      />
     </div>
   )
 }
