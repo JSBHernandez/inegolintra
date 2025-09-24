@@ -106,9 +106,6 @@ npm run dev
 
 6. Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### Default Admin Access
-- Email: `admin@inegol.com`
-- Password: `admin123`
 
 ## Production Deployment
 
