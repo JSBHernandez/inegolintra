@@ -438,48 +438,50 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-4">
-            {currentView === 'content' && selectedModule && (
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-4">
+              {currentView === 'content' && selectedModule && (
+                <button
+                  onClick={handleBackToModules}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors font-medium"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                  Back to Modules
+                </button>
+              )}
+              <h1 className="text-2xl font-bold text-gray-900">
+                {currentView === 'modules' ? 'Training Modules' : selectedModule?.title}
+              </h1>
+            </div>
+            {user.role === 'ADMIN' && currentView === 'modules' && (
               <button
-                onClick={handleBackToModules}
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                onClick={() => setShowCreateModule(true)}
+                className="inline-flex items-center px-4 py-2 bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                 </svg>
-                Back to Modules
+                Create Module
               </button>
             )}
-            <h1 className="text-3xl font-bold text-gray-900">
-              {currentView === 'modules' ? 'Interactive Training Modules' : selectedModule?.title}
-            </h1>
+            {user.role === 'ADMIN' && currentView === 'content' && selectedModule && (
+              <button
+                onClick={() => setShowAddContent(true)}
+                className="inline-flex items-center px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                Add Content
+              </button>
+            )}
           </div>
-          {user.role === 'ADMIN' && currentView === 'modules' && (
-            <button
-              onClick={() => setShowCreateModule(true)}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium rounded-xl hover:from-orange-600 hover:to-red-600 focus:ring-4 focus:ring-orange-200 transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Create Module
-            </button>
-          )}
-          {user.role === 'ADMIN' && currentView === 'content' && selectedModule && (
-            <button
-              onClick={() => setShowAddContent(true)}
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 text-white font-medium rounded-xl hover:from-green-600 hover:to-blue-600 focus:ring-4 focus:ring-green-200 transition-all duration-200 shadow-lg hover:shadow-xl"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Add Content
-            </button>
-          )}
         </div>
 
         {/* Messages */}
