@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { TrainingModule, TrainingModuleContent, AuthUser, ContentType } from '@/types'
+import { TrainingModule, TrainingModuleContent, AuthUser, ContentType, TrainingCategory } from '@/types'
 
 interface InteractiveTrainingModulesProps {
   user: AuthUser
@@ -19,6 +19,21 @@ interface ContentForm {
   isActive: boolean
 }
 
+const TRAINING_CATEGORIES: { value: TrainingCategory; label: string }[] = [
+  { value: 'VISAS', label: 'Visas' },
+  { value: 'IMMIGRATION_LAW', label: 'Immigration Law' },
+  { value: 'CUSTOMER_SERVICE', label: 'Customer Service' },
+  { value: 'TECHNOLOGY', label: 'Technology' },
+  { value: 'COMPLIANCE', label: 'Compliance' },
+  { value: 'SAFETY', label: 'Safety' },
+  { value: 'OTHER', label: 'Other' }
+]
+
+const getCategoryLabel = (category: TrainingCategory | null | undefined): string => {
+  if (!category) return ''
+  return TRAINING_CATEGORIES.find(c => c.value === category)?.label || category
+}
+
 export default function InteractiveTrainingModules({ user }: InteractiveTrainingModulesProps) {
   const [modules, setModules] = useState<TrainingModule[]>([])
   const [selectedModule, setSelectedModule] = useState<TrainingModule | null>(null)
@@ -34,7 +49,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
   const [moduleForm, setModuleForm] = useState({
     title: '',
     description: '',
-    category: '',
+    category: 'VISAS' as TrainingCategory,
     content: '',
     isActive: true,
     order: 0
@@ -68,6 +83,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
       if (response.ok) {
         const result = await response.json()
         if (result.success) {
+          console.log('Fetched modules in frontend:', result.data)
           setModules(result.data)
         } else {
           setError(result.error || 'Failed to fetch training modules')
@@ -114,11 +130,13 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
       const moduleData = {
         title: moduleForm.title,
         description: moduleForm.description || null,
-        category: moduleForm.category,
+        category: moduleForm.category || null,
         content: moduleForm.content || null,
         isActive: moduleForm.isActive,
         order: moduleForm.order
       }
+
+      console.log('Sending module data:', moduleData)
 
       const response = await fetch('/api/training-modules', {
         method: 'POST',
@@ -134,7 +152,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
         setModuleForm({
           title: '',
           description: '',
-          category: '',
+          category: 'VISAS' as TrainingCategory,
           content: '',
           isActive: true,
           order: 0
@@ -160,7 +178,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
       const moduleData = {
         title: moduleForm.title,
         description: moduleForm.description || null,
-        category: moduleForm.category,
+        category: moduleForm.category || null,
         content: moduleForm.content || null,
         isActive: moduleForm.isActive,
         order: moduleForm.order
@@ -180,7 +198,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
         setModuleForm({
           title: '',
           description: '',
-          category: '',
+          category: 'VISAS' as TrainingCategory,
           content: '',
           isActive: true,
           order: 0
@@ -226,7 +244,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
     setModuleForm({
       title: module.title,
       description: module.description || '',
-      category: module.category,
+      category: module.category || 'VISAS',
       content: module.content || '',
       isActive: module.isActive,
       order: module.order
@@ -297,8 +315,8 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
               Training Modules
             </h2>
             
-            {/* Modules Grid - Full Width Layout */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {/* Modules Grid - 2 per row layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {modules.map((module) => (
                 <div
                   key={module.id}
@@ -306,9 +324,16 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                   onClick={() => handleModuleSelect(module)}
                 >
                   <div className="flex justify-between items-start mb-3">
-                    <h3 className="font-bold text-lg text-gray-900 truncate flex-1">
-                      {module.title}
-                    </h3>
+                    <div className="flex-1">
+                      <h3 className="font-bold text-lg text-gray-900 truncate">
+                        {module.title}
+                      </h3>
+                      {(module.category && module.category.trim() !== '') && (
+                        <div className="text-sm font-medium text-blue-600 mt-1">
+                          {getCategoryLabel(module.category)}
+                        </div>
+                      )}
+                    </div>
                     {user.role === 'ADMIN' && (
                       <div className="flex gap-2 ml-2">
                         <button
@@ -347,12 +372,6 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                         {module.isActive ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    
-                    {module.category && (
-                      <div className="text-sm font-medium text-blue-600 bg-blue-50 px-2 py-1 rounded-lg inline-block">
-                        {module.category}
-                      </div>
-                    )}
                     
                     {module.description && (
                       <p className="text-gray-600 text-sm line-clamp-2">
@@ -393,7 +412,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                     setModuleForm({
                       title: '',
                       description: '',
-                      category: '',
+                      category: 'VISAS' as TrainingCategory,
                       content: '',
                       isActive: true,
                       order: 0
@@ -435,13 +454,17 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Category
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={moduleForm.category}
-                    onChange={(e) => setModuleForm({ ...moduleForm, category: e.target.value })}
+                    onChange={(e) => setModuleForm({ ...moduleForm, category: e.target.value as TrainingCategory })}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                    placeholder="Enter category..."
-                  />
+                  >
+                    {TRAINING_CATEGORIES.map((category) => (
+                      <option key={category.value} value={category.value}>
+                        {category.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 <div className="flex items-center gap-3 pt-2">
@@ -472,7 +495,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                       setModuleForm({
                         title: '',
                         description: '',
-                        category: '',
+                        category: 'VISAS' as TrainingCategory,
                         content: '',
                         isActive: true,
                         order: 0

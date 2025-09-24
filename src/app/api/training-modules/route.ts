@@ -44,6 +44,14 @@ export async function GET(request: NextRequest) {
       `
     }
 
+    const moduleArray = trainingModules as any[]
+    console.log('Fetched training modules:', moduleArray?.length || 0, 'modules')
+    console.log('Sample module data:', moduleArray?.[0] ? { 
+      id: moduleArray[0].id, 
+      title: moduleArray[0].title, 
+      category: moduleArray[0].category 
+    } : 'No modules found')
+
     return NextResponse.json({ success: true, data: trainingModules })
   } catch (error) {
     console.error('Get training modules error:', error)
@@ -59,13 +67,44 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const validatedData = trainingModuleSchema.parse(body)
+    const { title, description, category, content, isActive, order } = body
+
+    // Debug logging
+    console.log('Received data:', { title, description, category, content, isActive, order })
+
+    // Basic validation
+    if (!title || title.trim().length === 0) {
+      return NextResponse.json({ success: false, error: 'Title is required' }, { status: 400 })
+    }
+
+    // Process category properly - empty string should be null, but non-empty should be preserved
+    const categoryValue = category && category.trim() !== '' ? category.trim() : null
+    const descriptionValue = description && description.trim() !== '' ? description.trim() : null
+    const contentValue = content && content.trim() !== '' ? content.trim() : null
+
+    console.log('Processed values:', { 
+      title: title.trim(), 
+      categoryValue, 
+      descriptionValue, 
+      contentValue,
+      isActive: isActive !== false ? 1 : 0,
+      order: order || 0
+    })
 
     const newModule = await db.$executeRaw`
       INSERT INTO training_modules (title, description, category, content, isActive, \`order\`, createdAt, updatedAt)
-      VALUES (${validatedData.title}, ${validatedData.description}, ${validatedData.category}, ${validatedData.content}, ${validatedData.isActive}, ${validatedData.order}, NOW(), NOW())
+      VALUES (${title.trim()}, ${descriptionValue}, ${categoryValue}, ${contentValue}, ${isActive !== false ? 1 : 0}, ${order || 0}, NOW(), NOW())
     `
 
+    console.log('INSERT - SQL execution result:', newModule)
+
+    // Verify the insert with a quick query
+    const verifyInsert = await db.$queryRaw`
+      SELECT id, title, category, description FROM training_modules ORDER BY id DESC LIMIT 1
+    ` as any[]
+    console.log('INSERT - Verification query result:', verifyInsert[0] || 'No result')
+
+    console.log('Module created successfully')
     return NextResponse.json({ success: true, message: 'Training module created successfully' }, { status: 201 })
   } catch (error) {
     console.error('Create training module error:', error)

@@ -121,9 +121,9 @@ export type IncidentStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED'
 export interface TrainingModule {
   id: number
   title: string
-  description?: string
-  category: TrainingCategory
-  content?: string  // Now optional
+  description?: string | null
+  category?: TrainingCategory | null  // Changed to use proper enum
+  content?: string | null   // Made nullable
   isActive: boolean
   order: number
   createdAt: Date | string
@@ -147,7 +147,14 @@ export interface TrainingModuleContent {
   updatedAt: Date | string
 }
 
-export type TrainingCategory = string
+export type TrainingCategory = 
+  | 'VISAS'
+  | 'IMMIGRATION_LAW'
+  | 'CUSTOMER_SERVICE'
+  | 'TECHNOLOGY'
+  | 'COMPLIANCE'
+  | 'SAFETY'
+  | 'OTHER'
 
 export type ContentType = 
   | 'VIDEO'

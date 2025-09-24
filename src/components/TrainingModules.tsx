@@ -83,7 +83,7 @@ export default function TrainingModules({ user }: TrainingModulesProps) {
     form.reset({
       title: module.title,
       description: module.description || '',
-      category: module.category,
+      category: module.category || '',
       content: module.content,
       isActive: module.isActive,
       order: module.order,
@@ -239,9 +239,11 @@ export default function TrainingModules({ user }: TrainingModulesProps) {
                 </button>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">{selectedModule.title}</h3>
                 <div className="flex items-center space-x-3">
-                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(selectedModule.category)}`}>
-                    {selectedModule.category.replace('_', ' ')}
-                  </span>
+                  {selectedModule.category && (
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(selectedModule.category)}`}>
+                      {selectedModule.category.replace('_', ' ')}
+                    </span>
+                  )}
                   {selectedModule.isActive ? (
                     <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                       Active
@@ -326,9 +328,11 @@ export default function TrainingModules({ user }: TrainingModulesProps) {
                   </div>
                   
                   <div className="flex items-center space-x-2 mb-3">
-                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(module.category)}`}>
-                      {module.category.replace('_', ' ')}
-                    </span>
+                    {module.category && (
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getCategoryColor(module.category)}`}>
+                        {module.category.replace('_', ' ')}
+                      </span>
+                    )}
                     {module.isActive ? (
                       <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
                         Active

@@ -97,10 +97,10 @@ export const incidentReportSchema = z.object({
 
 // Training Module Validations
 export const trainingModuleSchema = z.object({
-  title: z.string().max(255, 'Title is too long'),
-  description: z.string().max(500, 'Description is too long').optional(),
-  category: z.string(),
-  content: z.string().optional(), // Made optional and removed minimum requirement
+  title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
+  description: z.string().max(500, 'Description is too long').optional().nullable(),
+  category: z.string().max(100, 'Category is too long').optional().nullable(),
+  content: z.string().max(10000, 'Content is too long').optional().nullable(),
   isActive: z.boolean(),
   order: z.number().int().min(0),
 })

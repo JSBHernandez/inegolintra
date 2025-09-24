@@ -7,6 +7,16 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum TrainingCategory {
+  VISAS
+  IMMIGRATION_LAW
+  CUSTOMER_SERVICE
+  TECHNOLOGY
+  COMPLIANCE
+  SAFETY
+  OTHER
+}
+
 model ClientCase {
   id            Int        @id @default(autoincrement())
   clientName    String     @db.VarChar(255)
@@ -120,7 +130,7 @@ model TrainingModule {
   id            Int                   @id @default(autoincrement())
   title         String                @db.VarChar(255)
   description   String?               @db.Text
-  category      String
+  category      TrainingCategory
   content       String?               @db.LongText  // Now optional, content can be in items
   isActive      Boolean               @default(true)
   order         Int                   @default(0)
