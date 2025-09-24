@@ -285,7 +285,7 @@ export default function TrainingModules({ user }: TrainingModulesProps) {
           <div className="p-6">
             <div 
               className="prose max-w-none"
-              dangerouslySetInnerHTML={{ __html: selectedModule.content }}
+              dangerouslySetInnerHTML={{ __html: selectedModule.content || '' }}
             />
           </div>
         </div>

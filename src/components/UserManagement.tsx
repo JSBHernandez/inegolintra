@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { createUserSchema, updateUserSchema, CreateUserFormData, UpdateUserFormData } from '@/lib/validations'
 import { User } from '@/types'
 import UserFiles from './UserFiles'
+import UserProfileModal from './UserProfileModal'
 
 export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([])
@@ -14,6 +15,7 @@ export default function UserManagement() {
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
   const [showUserFiles, setShowUserFiles] = useState<User | null>(null)
+  const [selectedUserProfile, setSelectedUserProfile] = useState<User | null>(null)
 
   const createForm = useForm<CreateUserFormData>({
     resolver: zodResolver(createUserSchema),
@@ -120,6 +122,18 @@ export default function UserManagement() {
     }
   }
 
+  const handleUserProfileUpdate = (updatedUser: User) => {
+    setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user))
+    setSubmitMessage('User profile updated successfully!')
+    setTimeout(() => setSubmitMessage(''), 3000)
+  }
+
+  const handleUserProfileDelete = (userId: string) => {
+    setUsers(users.filter(user => user.id.toString() !== userId))
+    setSubmitMessage('User deleted successfully!')
+    setTimeout(() => setSubmitMessage(''), 3000)
+  }
+
   const handleEditUser = (user: User) => {
     setEditingUser(user)
     editForm.reset({
@@ -204,9 +218,6 @@ export default function UserManagement() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Role & Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -232,7 +243,12 @@ export default function UserManagement() {
                       </div>
                       {/* User Info */}
                       <div>
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                        <button
+                          onClick={() => setSelectedUserProfile(user)}
+                          className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+                        >
+                          {user.name}
+                        </button>
                         <div className="text-sm text-gray-500">{user.email}</div>
                         <div className="text-xs text-gray-400">{user.position}</div>
                         {user.address && (
@@ -286,28 +302,6 @@ export default function UserManagement() {
                       <div className="text-xs text-gray-500 mt-2">
                         Last login: {user.lastLogin ? formatDate(user.lastLogin) : 'Never'}
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleEditUser(user)}
-                        className="text-indigo-600 hover:text-indigo-900 text-sm"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => setShowUserFiles(user)}
-                        className="text-blue-600 hover:text-blue-900 text-sm"
-                      >
-                        Files
-                      </button>
-                      <button
-                        onClick={() => handleDeleteUser(user.id)}
-                        className="text-red-600 hover:text-red-900 text-sm"
-                      >
-                        Delete
-                      </button>
                     </div>
                   </td>
                 </tr>
@@ -551,6 +545,17 @@ export default function UserManagement() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* User Profile Modal */}
+      {selectedUserProfile && (
+        <UserProfileModal
+          user={selectedUserProfile}
+          isOpen={!!selectedUserProfile}
+          onClose={() => setSelectedUserProfile(null)}
+          onUserUpdate={handleUserProfileUpdate}
+          onUserDelete={handleUserProfileDelete}
+        />
       )}
     </div>
   )

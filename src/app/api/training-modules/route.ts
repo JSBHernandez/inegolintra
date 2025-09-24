@@ -13,19 +13,36 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
 
-    const whereClause: { isActive: boolean; category?: 'VISAS' | 'IMMIGRATION_LAW' | 'CUSTOMER_SERVICE' | 'TECHNOLOGY' | 'COMPLIANCE' | 'SAFETY' | 'OTHER' } = { isActive: true }
-    
+    let trainingModules
     if (category) {
-      whereClause.category = category as 'VISAS' | 'IMMIGRATION_LAW' | 'CUSTOMER_SERVICE' | 'TECHNOLOGY' | 'COMPLIANCE' | 'SAFETY' | 'OTHER'
+      trainingModules = await db.$queryRaw`
+        SELECT id, title, description, category, content, isActive, \`order\`, 
+               createdAt, 
+               CASE 
+                 WHEN updatedAt = '0000-00-00 00:00:00' OR updatedAt IS NULL 
+                 THEN createdAt 
+                 ELSE updatedAt 
+               END as updatedAt
+        FROM training_modules 
+        WHERE isActive = 1 AND category = ${category}
+          AND createdAt != '0000-00-00 00:00:00'
+        ORDER BY \`order\` ASC, createdAt DESC
+      `
+    } else {
+      trainingModules = await db.$queryRaw`
+        SELECT id, title, description, category, content, isActive, \`order\`, 
+               createdAt, 
+               CASE 
+                 WHEN updatedAt = '0000-00-00 00:00:00' OR updatedAt IS NULL 
+                 THEN createdAt 
+                 ELSE updatedAt 
+               END as updatedAt
+        FROM training_modules 
+        WHERE isActive = 1
+          AND createdAt != '0000-00-00 00:00:00'
+        ORDER BY \`order\` ASC, createdAt DESC
+      `
     }
-
-    const trainingModules = await db.trainingModule.findMany({
-      where: whereClause,
-      orderBy: [
-        { order: 'asc' },
-        { createdAt: 'desc' }
-      ]
-    })
 
     return NextResponse.json({ success: true, data: trainingModules })
   } catch (error) {
@@ -44,18 +61,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = trainingModuleSchema.parse(body)
 
-    const newModule = await db.trainingModule.create({
-      data: {
-        title: validatedData.title,
-        description: validatedData.description,
-        category: validatedData.category,
-        content: validatedData.content,
-        isActive: validatedData.isActive,
-        order: validatedData.order,
-      }
-    })
+    const newModule = await db.$executeRaw`
+      INSERT INTO training_modules (title, description, category, content, isActive, \`order\`, createdAt, updatedAt)
+      VALUES (${validatedData.title}, ${validatedData.description}, ${validatedData.category}, ${validatedData.content}, ${validatedData.isActive}, ${validatedData.order}, NOW(), NOW())
+    `
 
-    return NextResponse.json({ success: true, data: newModule }, { status: 201 })
+    return NextResponse.json({ success: true, message: 'Training module created successfully' }, { status: 201 })
   } catch (error) {
     console.error('Create training module error:', error)
     if (error instanceof Error) {
@@ -81,12 +92,19 @@ export async function PUT(request: NextRequest) {
 
     const validatedData = trainingModuleSchema.parse(updateData)
 
-    const updatedModule = await db.trainingModule.update({
-      where: { id: parseInt(id) },
-      data: validatedData
-    })
+    const updatedModule = await db.$executeRaw`
+      UPDATE training_modules 
+      SET title = ${validatedData.title}, 
+          description = ${validatedData.description}, 
+          category = ${validatedData.category}, 
+          content = ${validatedData.content}, 
+          isActive = ${validatedData.isActive}, 
+          \`order\` = ${validatedData.order},
+          updatedAt = NOW()
+      WHERE id = ${parseInt(id)}
+    `
 
-    return NextResponse.json({ success: true, data: updatedModule })
+    return NextResponse.json({ success: true, message: 'Training module updated successfully' })
   } catch (error) {
     console.error('Update training module error:', error)
     if (error instanceof Error) {
@@ -110,9 +128,9 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Module ID is required' }, { status: 400 })
     }
 
-    await db.trainingModule.delete({
-      where: { id: parseInt(id) }
-    })
+    await db.$executeRaw`
+      DELETE FROM training_modules WHERE id = ${parseInt(id)}
+    `
 
     return NextResponse.json({ success: true, message: 'Training module deleted successfully' })
   } catch (error) {

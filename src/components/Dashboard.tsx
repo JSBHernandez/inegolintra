@@ -7,7 +7,7 @@ import {
   ClientPortal,
   UserManagement,
   HumanResources,
-  TrainingModules,
+  InteractiveTrainingModules,
   GlobalSearch,
   MyProfile,
   NewsManagement,
@@ -75,7 +75,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       case 'hr':
         return <HumanResources user={user} />
       case 'training':
-        return <TrainingModules user={user} />
+        return <InteractiveTrainingModules user={user} />
       case 'profile':
         return <MyProfile user={user} />
       default:

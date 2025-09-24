@@ -120,16 +120,43 @@ model TrainingModule {
   id            Int                   @id @default(autoincrement())
   title         String                @db.VarChar(255)
   description   String?               @db.Text
-  category      TrainingCategory
-  content       String                @db.LongText
+  category      String
+  content       String?               @db.LongText  // Now optional, content can be in items
   isActive      Boolean               @default(true)
   order         Int                   @default(0)
   createdAt     DateTime              @default(now())
   updatedAt     DateTime              @updatedAt
   
-  @@index([category], map: "idx_training_modules_category")
+  // Relations
+  contentItems  TrainingModuleContent[]
+  
   @@index([isActive], map: "idx_training_modules_active")
   @@map("training_modules")
+}
+
+// Training Module Content Items
+model TrainingModuleContent {
+  id            Int                   @id @default(autoincrement())
+  title         String                @db.VarChar(255)
+  description   String?               @db.Text
+  contentType   ContentType
+  url           String?               @db.VarChar(500)   // For YouTube videos, documents, etc.
+  fileData      String?               @db.LongText       // For uploaded files (Base64)
+  fileName      String?               @db.VarChar(255)   // Original filename
+  fileSize      Int?                  // File size in bytes
+  order         Int                   @default(0)
+  isActive      Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  
+  // Relations
+  moduleId      Int
+  module        TrainingModule        @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  
+  @@index([moduleId], map: "idx_training_content_module")
+  @@index([order], map: "idx_training_content_order")
+  @@index([isActive], map: "idx_training_content_active")
+  @@map("training_module_content")
 }
 
 // Enums
@@ -177,14 +204,12 @@ enum IncidentStatus {
   CLOSED
 }
 
-enum TrainingCategory {
-  VISAS
-  IMMIGRATION_LAW
-  CUSTOMER_SERVICE
-  TECHNOLOGY
-  COMPLIANCE
-  SAFETY
-  OTHER
+enum ContentType {
+  VIDEO
+  DOCUMENT
+  TEXT
+  LINK
+  YOUTUBE
 }
 
 // News Management System

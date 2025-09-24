@@ -123,21 +123,38 @@ export interface TrainingModule {
   title: string
   description?: string
   category: TrainingCategory
-  content: string
+  content?: string  // Now optional
   isActive: boolean
   order: number
   createdAt: Date | string
   updatedAt: Date | string
+  contentItems?: TrainingModuleContent[]
 }
 
-export type TrainingCategory = 
-  | 'VISAS'
-  | 'IMMIGRATION_LAW'
-  | 'CUSTOMER_SERVICE'
-  | 'TECHNOLOGY'
-  | 'COMPLIANCE'
-  | 'SAFETY'
-  | 'OTHER'
+export interface TrainingModuleContent {
+  id: number
+  title: string
+  description?: string
+  contentType: ContentType
+  url?: string
+  fileData?: string
+  fileName?: string
+  fileSize?: number
+  order: number
+  isActive: boolean
+  moduleId: number
+  createdAt: Date | string
+  updatedAt: Date | string
+}
+
+export type TrainingCategory = string
+
+export type ContentType = 
+  | 'VIDEO'
+  | 'DOCUMENT'
+  | 'TEXT'
+  | 'LINK'
+  | 'YOUTUBE'
 
 // Auth Types
 export interface LoginData {

@@ -97,12 +97,34 @@ export const incidentReportSchema = z.object({
 
 // Training Module Validations
 export const trainingModuleSchema = z.object({
-  title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
+  title: z.string().max(255, 'Title is too long'),
   description: z.string().max(500, 'Description is too long').optional(),
-  category: z.enum(['VISAS', 'IMMIGRATION_LAW', 'CUSTOMER_SERVICE', 'TECHNOLOGY', 'COMPLIANCE', 'SAFETY', 'OTHER']),
-  content: z.string().min(1, 'Content is required'),
+  category: z.string(),
+  content: z.string().optional(), // Made optional and removed minimum requirement
   isActive: z.boolean(),
   order: z.number().int().min(0),
+})
+
+export const trainingModuleContentSchema = z.object({
+  title: z.string().min(1, 'Title is required').max(255, 'Title is too long'),
+  description: z.string().max(1000, 'Description is too long').optional(),
+  contentType: z.enum(['VIDEO', 'DOCUMENT', 'TEXT', 'LINK', 'YOUTUBE']),
+  url: z.string().url('Invalid URL').optional().or(z.literal('')),
+  fileData: z.string().optional(), // Base64 data for uploaded files
+  fileName: z.string().max(255, 'File name is too long').optional(),
+  fileSize: z.number().int().min(0).optional(),
+  order: z.number().int().min(0),
+  isActive: z.boolean().default(true),
+  moduleId: z.number().int(),
+}).refine((data) => {
+  // Either URL or fileData should be provided for most content types
+  if (data.contentType === 'TEXT') {
+    return true // Text content doesn't need URL or file
+  }
+  return data.url || data.fileData
+}, {
+  message: "Either URL or file data is required for this content type",
+  path: ["url"],
 })
 
 // News Validations
@@ -205,6 +227,7 @@ export type LoginFormData = z.infer<typeof loginSchema>
 export type PermissionRequestFormData = z.infer<typeof permissionRequestSchema>
 export type IncidentReportFormData = z.infer<typeof incidentReportSchema>
 export type TrainingModuleFormData = z.infer<typeof trainingModuleSchema>
+export type TrainingModuleContentFormData = z.infer<typeof trainingModuleContentSchema>
 export type PasswordChangeFormData = z.infer<typeof passwordChangeSchema>
 export type CreateNewsFormData = z.infer<typeof createNewsSchema>
 export type UpdateNewsFormData = z.infer<typeof updateNewsSchema>
