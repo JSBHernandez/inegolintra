@@ -88,6 +88,13 @@ export default function UserProfileModal({
     setProfileLoading(true)
 
     try {
+      console.log('UserProfileModal sending data:', {
+        userId: user.id,
+        profileForm,
+        address: profileForm.address,
+        country: profileForm.country
+      })
+
       const response = await fetch(`/api/users/${user.id}`, {
         method: 'PUT',
         headers: {
@@ -97,14 +104,24 @@ export default function UserProfileModal({
       })
 
       const data = await response.json()
+      console.log('UserProfileModal response:', { response: response.ok, data })
 
-      if (!response.ok) {
+      if (!response.ok || !data.success) {
         throw new Error(data.error || 'Failed to update profile')
       }
 
       setProfileMessage('Profile updated successfully!')
       setIsEditingProfile(false)
-      onUserUpdate(data.user)
+      
+      // Call the callback with the updated user data
+      if (data.data && onUserUpdate) {
+        onUserUpdate(data.data)
+      }
+      
+      // Also close modal after successful update
+      setTimeout(() => {
+        handleCloseModal()
+      }, 1500)
       
       // Clear success message after 3 seconds
       setTimeout(() => setProfileMessage(''), 3000)

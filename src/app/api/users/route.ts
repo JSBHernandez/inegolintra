@@ -22,6 +22,13 @@ export async function GET(request: NextRequest) {
         lastLogin: true,
         createdAt: true,
         updatedAt: true,
+        // Profile fields
+        address: true,
+        country: true,
+        personalPhone: true,
+        emergencyPhone: true,
+        emergencyContactName: true,
+        profilePhoto: true,
       },
       orderBy: { createdAt: 'desc' }
     })

@@ -26,6 +26,12 @@ export async function verifyAuth(request: NextRequest): Promise<AuthUser | null>
         role: true,
         isActive: true,
         mustChangePassword: true,
+        address: true,
+        country: true,
+        personalPhone: true,
+        emergencyPhone: true,
+        emergencyContactName: true,
+        profilePhoto: true,
       }
     })
 
@@ -40,6 +46,12 @@ export async function verifyAuth(request: NextRequest): Promise<AuthUser | null>
       position: user.position,
       role: user.role,
       mustChangePassword: user.mustChangePassword,
+      address: user.address || undefined,
+      country: user.country || undefined,
+      personalPhone: user.personalPhone || undefined,
+      emergencyPhone: user.emergencyPhone || undefined,
+      emergencyContactName: user.emergencyContactName || undefined,
+      profilePhoto: user.profilePhoto || undefined,
     }
   } catch {
     return null

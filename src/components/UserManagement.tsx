@@ -123,9 +123,16 @@ export default function UserManagement() {
   }
 
   const handleUserProfileUpdate = (updatedUser: User) => {
-    setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user))
-    setSubmitMessage('User profile updated successfully!')
-    setTimeout(() => setSubmitMessage(''), 3000)
+    console.log('UserManagement received user update:', updatedUser)
+    if (updatedUser && updatedUser.id) {
+      setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user))
+      setSubmitMessage('User profile updated successfully!')
+      setTimeout(() => setSubmitMessage(''), 3000)
+    } else {
+      console.error('Invalid user data received in profile update:', updatedUser)
+      setSubmitMessage('Error updating user profile')
+      setTimeout(() => setSubmitMessage(''), 3000)
+    }
   }
 
   const handleUserProfileDelete = (userId: string) => {
@@ -171,12 +178,20 @@ export default function UserManagement() {
             <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
             <p className="mt-1 text-gray-600">Manage system users and their roles</p>
           </div>
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="bg-orange-600 text-white px-6 py-2 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors font-medium"
-          >
-            + Create New User
-          </button>
+          <div className="flex gap-3">
+            <button
+              onClick={fetchUsers}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+            >
+              🔄 Refresh
+            </button>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="bg-orange-600 text-white px-6 py-2 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors font-medium"
+            >
+              + Create New User
+            </button>
+          </div>
         </div>
       </div>
 

@@ -8,6 +8,8 @@ import UserFiles from './UserFiles'
 interface MyProfileProps {
   user: AuthUser
   onPasswordChanged?: () => void
+  onProfileUpdated?: (updatedUser: AuthUser) => void
+  onUserDataRefresh?: () => Promise<void>
 }
 
 interface PasswordChangeForm {
@@ -25,7 +27,7 @@ interface ProfileForm {
   profilePhoto: string
 }
 
-export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
+export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, onUserDataRefresh }: MyProfileProps) {
   const [activeTab, setActiveTab] = useState<'profile' | 'files'>('profile')
   const [showPasswordChange, setShowPasswordChange] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -181,14 +183,38 @@ export default function MyProfile({ user, onPasswordChanged }: MyProfileProps) {
       })
 
       const data = await response.json()
+      console.log('Profile update response:', { response: response.ok, data })
 
-      if (response.ok) {
+      if (response.ok && data.success) {
         setProfileMessage('Profile updated successfully!')
         setIsEditingProfile(false)
         setPhotoFile(null)
         setPhotoPreview(null)
-        // Update form with the new data
-        setProfileForm(prev => ({ ...prev, profilePhoto: photoUrl }))
+        
+        // Update local form with the new data
+        if (data.data) {
+          setProfileForm({
+            address: data.data.address || '',
+            country: data.data.country || '',
+            personalPhone: data.data.personalPhone || '',
+            emergencyPhone: data.data.emergencyPhone || '',
+            emergencyContactName: data.data.emergencyContactName || '',
+            profilePhoto: data.data.profilePhoto || ''
+          })
+          
+          // Notify parent component about the update only if we have valid data
+          if (onProfileUpdated && data.data.id) {
+            onProfileUpdated(data.data)
+          }
+          
+          // Trigger a full user data refresh if available
+          if (onUserDataRefresh) {
+            await onUserDataRefresh()
+          }
+        } else {
+          // If no data returned, just update the photo URL in the form
+          setProfileForm(prev => ({ ...prev, profilePhoto: photoUrl }))
+        }
       } else {
         setProfileError(data.error || 'Failed to update profile')
       }

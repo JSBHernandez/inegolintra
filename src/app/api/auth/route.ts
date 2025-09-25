@@ -69,6 +69,14 @@ export async function POST(request: NextRequest) {
         )
       }
 
+      // Update lastLogin timestamp
+      console.log('Updating lastLogin for user:', user.id)
+      await db.user.update({
+        where: { id: user.id },
+        data: { lastLogin: new Date() }
+      })
+      console.log('LastLogin updated successfully')
+
       // Create JWT token
       const token = jwt.sign(
         { userId: user.id },

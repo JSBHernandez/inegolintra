@@ -24,6 +24,51 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
   const [showSearch, setShowSearch] = useState(false)
   const [news, setNews] = useState<News[]>([])
   const [loadingNews, setLoadingNews] = useState(true)
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(user)
+
+  // Update currentUser when user prop changes
+  useEffect(() => {
+    setCurrentUser(user)
+  }, [user])
+
+  // Function to refresh user data from server
+  const refreshUserData = async () => {
+    try {
+      const response = await fetch('/api/me')
+      const result = await response.json()
+      
+      if (result.success && result.user) {
+        setCurrentUser(result.user)
+        console.log('User data refreshed:', result.user)
+      }
+    } catch (error) {
+      console.error('Failed to refresh user data:', error)
+    }
+  }
+
+  // Handle profile updates
+  const handleProfileUpdate = async (updatedUser: AuthUser) => {
+    console.log('Dashboard received profile update:', updatedUser)
+    if (updatedUser && updatedUser.id) {
+      // Update local state immediately
+      setCurrentUser(updatedUser)
+      
+      // Refresh user data from server to ensure consistency
+      try {
+        const response = await fetch('/api/me')
+        const result = await response.json()
+        
+        if (result.success && result.user) {
+          setCurrentUser(result.user)
+          console.log('User data refreshed from server:', result.user)
+        }
+      } catch (error) {
+        console.error('Failed to refresh user data:', error)
+      }
+    } else {
+      console.error('Invalid user data received in profile update:', updatedUser)
+    }
+  }
 
   // Fetch active news on component mount
   useEffect(() => {
@@ -45,11 +90,11 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     fetchNews()
   }, [])
 
-  if (!user) {
+  if (!currentUser) {
     return null
   }
 
-  const isAdmin = user.role === 'ADMIN' || user.email === 'admin'
+  const isAdmin = currentUser.role === 'ADMIN' || currentUser.email === 'admin'
 
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: '🏠', available: true },
@@ -67,28 +112,28 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       case 'client-portal':
         return <ClientPortal />
       case 'news':
-        return <NewsManagement user={user} />
+        return <NewsManagement user={currentUser} />
       case 'immigration-news':
         return <ImmigrationNews />
       case 'users':
         return <UserManagement />
       case 'hr':
-        return <HumanResources user={user} />
+        return <HumanResources user={currentUser} />
       case 'training':
-        return <InteractiveTrainingModules user={user} />
+        return <InteractiveTrainingModules user={currentUser} />
       case 'profile':
-        return <MyProfile user={user} />
+        return <MyProfile user={currentUser} onProfileUpdated={handleProfileUpdate} onUserDataRefresh={refreshUserData} />
       default:
         return (
           <div className="max-w-7xl mx-auto">
             {/* Welcome Section */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Welcome to Inegol Intranet, {user.name}
+                Welcome to Inegol Intranet, {currentUser.name}
               </h2>
-              <p className="text-gray-600">{user.position}</p>
+              <p className="text-gray-600">{currentUser.position}</p>
               <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
-                <span>Role: {user.role === 'ADMIN' ? 'Administrator' : 'Agent'}</span>
+                <span>Role: {currentUser.role === 'ADMIN' ? 'Administrator' : 'Agent'}</span>
                 <span>•</span>
                 <span>Last login: {new Date().toLocaleDateString()}</span>
               </div>
@@ -275,8 +320,8 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
 
               {/* User Info */}
               <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                <p className="text-xs text-gray-600">{user.position}</p>
+                <p className="text-sm font-medium text-gray-900">{currentUser.name}</p>
+                <p className="text-xs text-gray-600">{currentUser.position}</p>
               </div>
 
               {/* Logout Button */}
@@ -295,7 +340,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       {showSearch && (
         <div className="bg-white border-b border-gray-200 flex-shrink-0">
           <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <GlobalSearch user={user} />
+            <GlobalSearch user={currentUser} />
           </div>
         </div>
       )}
