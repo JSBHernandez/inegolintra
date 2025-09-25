@@ -263,7 +263,7 @@ export default function NewsManagement({ user: _user }: NewsManagementProps) {
                       alt={article.title}
                       className="max-w-md h-auto rounded-lg object-cover shadow-sm border"
                       style={{ maxHeight: '300px' }}
-                      onError={(e) => console.error('NewsManagement image load error:', article.title)}
+                      onError={(_e) => console.error('NewsManagement image load error:', article.title)}
                       onLoad={() => console.log('NewsManagement image loaded successfully:', article.title)}
                     />
                   </div>

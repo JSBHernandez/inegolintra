@@ -171,7 +171,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                             alt={article.title}
                             className="max-w-md h-auto rounded-lg object-cover shadow-sm border"
                             style={{ maxHeight: '300px' }}
-                            onError={(e) => console.error('Dashboard image load error:', article.title)}
+                            onError={(_e) => console.error('Dashboard image load error:', article.title)}
                             onLoad={() => console.log('Dashboard image loaded successfully:', article.title)}
                           />
                         </div>

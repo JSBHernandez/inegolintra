@@ -87,7 +87,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
     isActive: true
   })
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [_selectedFile, setSelectedFile] = useState<File | null>(null)
 
   useEffect(() => {
     fetchModules()

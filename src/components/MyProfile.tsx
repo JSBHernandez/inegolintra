@@ -112,7 +112,7 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
       } else {
         setError(data.error || 'Failed to change password')
       }
-    } catch (error) {
+    } catch (_error) {
       setError('An error occurred while changing password')
     } finally {
       setLoading(false)
@@ -218,7 +218,7 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
       } else {
         setProfileError(data.error || 'Failed to update profile')
       }
-    } catch (error) {
+    } catch (_error) {
       setProfileError('An error occurred while updating profile')
     } finally {
       setProfileLoading(false)

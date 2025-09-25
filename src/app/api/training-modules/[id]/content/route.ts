@@ -93,7 +93,7 @@ export async function POST(
     }
 
     // Insert content item
-    const result = await db.$executeRaw`
+    const _result = await db.$executeRaw`
       INSERT INTO training_module_content 
       (title, description, contentType, url, fileData, fileName, fileSize, \`order\`, isActive, moduleId, createdAt, updatedAt)
       VALUES (${title}, ${description}, ${finalContentType}, ${finalUrl}, ${fileData}, ${fileName}, ${fileSize}, ${order}, ${isActive}, ${moduleId}, NOW(), NOW())
@@ -112,7 +112,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const resolvedParams = await params
+    const _resolvedParams = await params
     const authUser = await verifyAuth(request)
     if (!authUser || authUser.role !== 'ADMIN') {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
@@ -126,7 +126,7 @@ export async function DELETE(
     }
 
     // Delete content item
-    const result = await db.$executeRaw`
+    const _result = await db.$executeRaw`
       DELETE FROM training_module_content WHERE id = ${parseInt(contentId)}
     `
 

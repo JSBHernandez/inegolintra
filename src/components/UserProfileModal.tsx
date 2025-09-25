@@ -46,9 +46,9 @@ export default function UserProfileModal({
   })
 
   // Profile photo states
-  const [photoFile, setPhotoFile] = useState<File | null>(null)
+  const [_photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
-  const [photoUploading, setPhotoUploading] = useState(false)
+  const [_photoUploading, _setPhotoUploading] = useState(false)
 
   const resetMessages = () => {
     setProfileMessage('')

@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const result = await db.$queryRaw`
+    const _result = await db.$queryRaw`
       INSERT INTO paralegals (name, isActive, createdAt, updatedAt) 
       VALUES (${name.trim()}, 1, NOW(), NOW())
     `
@@ -106,7 +106,7 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 })
     }
 
-    const result = await db.$queryRaw`
+    const _result = await db.$queryRaw`
       UPDATE paralegals 
       SET isActive = ${isActive}, updatedAt = NOW() 
       WHERE id = ${parseInt(id)}

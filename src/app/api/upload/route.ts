@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads')
     try {
       await mkdir(uploadsDir, { recursive: true })
-    } catch (error) {
+    } catch (_error) {
       // Directory might already exist, ignore error
     }
 

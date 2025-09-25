@@ -99,7 +99,7 @@ export default function UserManagement() {
     }
   }
 
-  const handleDeleteUser = async (userId: number) => {
+  const _handleDeleteUser = async (userId: number) => {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return
     }
@@ -141,7 +141,7 @@ export default function UserManagement() {
     setTimeout(() => setSubmitMessage(''), 3000)
   }
 
-  const handleEditUser = (user: User) => {
+  const _handleEditUser = (user: User) => {
     setEditingUser(user)
     editForm.reset({
       name: user.name,

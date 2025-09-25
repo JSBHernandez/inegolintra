@@ -3,11 +3,12 @@ import { db } from '@/lib/db'
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string; contentId: string } }
+  { params }: { params: Promise<{ id: string; contentId: string }> }
 ) {
   try {
-    const moduleId = parseInt(params.id)
-    const contentId = parseInt(params.contentId)
+    const resolvedParams = await params
+    const moduleId = parseInt(resolvedParams.id)
+    const contentId = parseInt(resolvedParams.contentId)
 
     if (isNaN(moduleId) || isNaN(contentId)) {
       return NextResponse.json({
@@ -53,11 +54,12 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string; contentId: string } }
+  { params }: { params: Promise<{ id: string; contentId: string }> }
 ) {
   try {
-    const moduleId = parseInt(params.id)
-    const contentId = parseInt(params.contentId)
+    const resolvedParams = await params
+    const moduleId = parseInt(resolvedParams.id)
+    const contentId = parseInt(resolvedParams.contentId)
 
     if (isNaN(moduleId) || isNaN(contentId)) {
       return NextResponse.json({
@@ -141,11 +143,12 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string; contentId: string } }
+  { params }: { params: Promise<{ id: string; contentId: string }> }
 ) {
   try {
-    const moduleId = parseInt(params.id)
-    const contentId = parseInt(params.contentId)
+    const resolvedParams = await params
+    const moduleId = parseInt(resolvedParams.id)
+    const contentId = parseInt(resolvedParams.contentId)
 
     if (isNaN(moduleId) || isNaN(contentId)) {
       return NextResponse.json({

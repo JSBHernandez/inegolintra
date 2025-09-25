@@ -44,12 +44,12 @@ export async function GET(request: NextRequest) {
       `
     }
 
-    const moduleArray = trainingModules as any[]
+    const moduleArray = trainingModules as unknown[]
     console.log('Fetched training modules:', moduleArray?.length || 0, 'modules')
     console.log('Sample module data:', moduleArray?.[0] ? { 
-      id: moduleArray[0].id, 
-      title: moduleArray[0].title, 
-      category: moduleArray[0].category 
+      id: (moduleArray[0] as Record<string, unknown>).id, 
+      title: (moduleArray[0] as Record<string, unknown>).title, 
+      category: (moduleArray[0] as Record<string, unknown>).category 
     } : 'No modules found')
 
     return NextResponse.json({ success: true, data: trainingModules })
@@ -101,8 +101,8 @@ export async function POST(request: NextRequest) {
     // Verify the insert with a quick query
     const verifyInsert = await db.$queryRaw`
       SELECT id, title, category, description FROM training_modules ORDER BY id DESC LIMIT 1
-    ` as any[]
-    console.log('INSERT - Verification query result:', verifyInsert[0] || 'No result')
+    ` as unknown[]
+    console.log('INSERT - Verification query result:', (verifyInsert[0] as Record<string, unknown>) || 'No result')
 
     console.log('Module created successfully')
     return NextResponse.json({ success: true, message: 'Training module created successfully' }, { status: 201 })
@@ -131,7 +131,7 @@ export async function PUT(request: NextRequest) {
 
     const validatedData = trainingModuleSchema.parse(updateData)
 
-    const updatedModule = await db.$executeRaw`
+    const _updatedModule = await db.$executeRaw`
       UPDATE training_modules 
       SET title = ${validatedData.title}, 
           description = ${validatedData.description}, 
