@@ -407,12 +407,24 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
                       </div>
                       {isEditingProfile && (
                         <div className="flex-1">
-                          <input
-                            type="file"
-                            accept="image/*"
-                            onChange={handlePhotoChange}
-                            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                          />
+                          <div className="relative">
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={handlePhotoChange}
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              id="photo-upload"
+                            />
+                            <label 
+                              htmlFor="photo-upload"
+                              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
+                            >
+                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                              </svg>
+                              Choose File
+                            </label>
+                          </div>
                           <p className="mt-1 text-xs text-gray-500">
                             Upload a photo (max 2MB, JPG/PNG - deployment optimized)
                           </p>

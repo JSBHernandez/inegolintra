@@ -32,7 +32,7 @@ export default function ClientPortal() {
   }
 
   return (
-    <div className="max-w-full">
+    <div className="px-4 sm:px-6 lg:px-8">
       {/* Header Section */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex justify-between items-center">

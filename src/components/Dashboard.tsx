@@ -125,7 +125,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         return <MyProfile user={currentUser} onProfileUpdated={handleProfileUpdate} onUserDataRefresh={refreshUserData} />
       default:
         return (
-          <div className="max-w-7xl mx-auto">
+          <div className="px-4 sm:px-6 lg:px-8">
             {/* Welcome Section */}
             <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">

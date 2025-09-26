@@ -40,7 +40,7 @@ export const updateProfileSchema = z.object({
   emergencyPhone: z.string().max(20, 'Emergency phone is too long').optional().or(z.literal('')),
   emergencyContactName: z.string().max(255, 'Emergency contact name is too long').optional().or(z.literal('')),
   profilePhoto: z.string().refine(
-    (val) => val === '' || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:'),
+    (val) => val === '' || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:') || val.startsWith('/api/files/'),
     'Invalid photo URL or data format'
   ).optional().or(z.literal('')),
 })
@@ -57,7 +57,7 @@ export const updateCompleteProfileSchema = z.object({
   emergencyPhone: z.string().max(20, 'Emergency phone is too long').optional().or(z.literal('')),
   emergencyContactName: z.string().max(255, 'Emergency contact name is too long').optional().or(z.literal('')),
   profilePhoto: z.string().refine(
-    (val) => val === '' || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:'),
+    (val) => val === '' || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:') || val.startsWith('/api/files/'),
     'Invalid photo URL or data format'
   ).optional().or(z.literal('')),
 })
