@@ -3,25 +3,27 @@
 import { useState, useEffect } from 'react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { uploadUserFileSchema, UploadUserFileFormData } from '@/lib/validations'
+import { uploadUserFileFormSchema, UploadUserFileFormData } from '@/lib/validations'
 import { UserFile, AuthUser } from '@/types'
 
 interface UserFilesProps {
-  user: AuthUser
+  user: AuthUser  // The user whose files we're viewing
+  currentUser?: AuthUser  // The currently authenticated user (optional, will be fetched if not provided)
 }
 
-export default function UserFiles({ user }: UserFilesProps) {
+export default function UserFiles({ user, currentUser }: UserFilesProps) {
   const [files, setFiles] = useState<UserFile[]>([])
   const [loading, setLoading] = useState(true)
   const [showUploadForm, setShowUploadForm] = useState(false)
   const [submitMessage, setSubmitMessage] = useState('')
   const [uploadingFile, setUploadingFile] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [authUser, setAuthUser] = useState<AuthUser | null>(currentUser || null)
 
   const uploadForm = useForm<UploadUserFileFormData>({
-    resolver: zodResolver(uploadUserFileSchema),
+    resolver: zodResolver(uploadUserFileFormSchema),
     defaultValues: {
       fileName: '',
-      fileUrl: '',
       fileType: '',
       fileSize: 0,
       description: ''
@@ -29,8 +31,24 @@ export default function UserFiles({ user }: UserFilesProps) {
   })
 
   useEffect(() => {
+    // Fetch current user if not provided
+    if (!authUser) {
+      fetchCurrentUser()
+    }
     fetchFiles()
   }, [])
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await fetch('/api/me')
+      const result = await response.json()
+      if (result.success) {
+        setAuthUser(result.user)
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error)
+    }
+  }
 
   const fetchFiles = async () => {
     try {
@@ -51,6 +69,7 @@ export default function UserFiles({ user }: UserFilesProps) {
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
+    console.log('File selected:', file ? file.name : 'No file')
     if (!file) return
 
     // Validate file type
@@ -77,55 +96,110 @@ export default function UserFiles({ user }: UserFilesProps) {
       return
     }
 
-    setUploadingFile(true)
-
-    try {
-      const formData = new FormData()
-      formData.append('photo', file)
-
-      const response = await fetch('/api/upload-photo', {
-        method: 'POST',
-        body: formData,
-      })
-
-      const result = await response.json()
-
-      if (result.success) {
-        uploadForm.setValue('fileName', file.name)
-        uploadForm.setValue('fileUrl', result.photoUrl)
-        uploadForm.setValue('fileType', file.type)
-        uploadForm.setValue('fileSize', file.size)
-        setSubmitMessage('File uploaded successfully! Please add a description and save.')
-      } else {
-        setSubmitMessage(`Error uploading file: ${result.error}`)
-      }
-    } catch {
-      setSubmitMessage('Connection error while uploading file')
-    } finally {
-      setUploadingFile(false)
-    }
+    // Auto-populate form fields for validation
+    uploadForm.setValue('fileName', file.name)
+    uploadForm.setValue('fileType', file.type)
+    uploadForm.setValue('fileSize', file.size)
+    
+    setSelectedFile(file)
+    console.log('File set in state:', file.name)
+    setSubmitMessage('File selected successfully! Please add a description and save.')
   }
 
   const handleSubmitFile: SubmitHandler<UploadUserFileFormData> = async (data) => {
-    try {
-      const response = await fetch('/api/user-files', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      })
+    console.log('handleSubmitFile called', { selectedFile: !!selectedFile, data })
+    console.log('Context:', { authUser: authUser?.id, targetUser: user.id, isAdmin: authUser?.role === 'ADMIN' })
+    
+    if (selectedFile && authUser) {
+      console.log('Starting upload for file:', selectedFile.name)
+      setUploadingFile(true)
+      
+      try {
+        // Determine if we're in User Management context (admin uploading for another user)
+        const isUserManagement = authUser.role === 'ADMIN' && authUser.id !== user.id
+        
+        if (isUserManagement) {
+          // Admin uploading for another user - use /api/user-files POST with JSON
+          console.log('Using User Management upload (admin for another user)')
+          
+          // Convert file to base64
+          const fileBuffer = await selectedFile.arrayBuffer()
+          const base64File = Buffer.from(fileBuffer).toString('base64')
+          const dataUrl = `data:${selectedFile.type};base64,${base64File}`
+          
+          const payload = {
+            fileName: selectedFile.name,
+            fileUrl: dataUrl,
+            fileType: selectedFile.type,
+            fileSize: selectedFile.size,
+            description: data.description || 'File uploaded by administrator',
+            userId: user.id  // Target user
+          }
+          
+          console.log('Making request to /api/user-files with payload for user:', user.id)
+          const response = await fetch('/api/user-files', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          })
+          
+          const result = await response.json()
+          console.log('User Management upload result:', result)
+          
+          if (result.success) {
+            console.log('Upload successful, closing modal')
+            setSubmitMessage('File uploaded and assigned to user successfully!')
+            uploadForm.reset()
+            setSelectedFile(null)
+            setShowUploadForm(false)
+            fetchFiles()
+          } else {
+            setSubmitMessage(`Error: ${result.error}`)
+          }
+          
+        } else {
+          // Regular user uploading for themselves - use /api/user-files/upload with FormData
+          console.log('Using personal upload (user for themselves)')
+          
+          const formData = new FormData()
+          formData.append('file', selectedFile)
+          if (data.description) {
+            formData.append('description', data.description)
+          }
 
-      const result = await response.json()
+          console.log('Making request to /api/user-files/upload')
+          const response = await fetch('/api/user-files/upload', {
+            method: 'POST',
+            body: formData,
+          })
 
-      if (result.success) {
-        setSubmitMessage('File saved successfully!')
-        uploadForm.reset()
-        setShowUploadForm(false)
-        fetchFiles()
-      } else {
-        setSubmitMessage(`Error: ${result.error}`)
+          console.log('Upload response status:', response.status)
+          const result = await response.json()
+          console.log('Upload result:', result)
+
+          if (result.success) {
+            console.log('Upload successful, closing modal')
+            setSubmitMessage('File uploaded and saved successfully!')
+            uploadForm.reset()
+            setSelectedFile(null)
+            setShowUploadForm(false)
+            fetchFiles()
+          } else {
+            setSubmitMessage(`Error uploading file: ${result.error}`)
+          }
+        }
+      } catch (error) {
+        console.error('Upload error:', error)
+        setSubmitMessage('Connection error while uploading file')
+      } finally {
+        setUploadingFile(false)
       }
-    } catch {
-      setSubmitMessage('Failed to save file')
+    } else {
+      // If no file selected, show error
+      console.log('No file selected')
+      setSubmitMessage('Please select a file first.')
     }
   }
 
@@ -194,7 +268,12 @@ export default function UserFiles({ user }: UserFilesProps) {
             <p className="mt-1 text-gray-600">Manage your personal documents and files</p>
           </div>
           <button
-            onClick={() => setShowUploadForm(true)}
+            onClick={() => {
+              setShowUploadForm(true)
+              setSelectedFile(null)
+              setSubmitMessage('')
+              uploadForm.reset()
+            }}
             className="bg-orange-600 text-white px-6 py-2 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors font-medium"
           >
             + Upload File
@@ -259,10 +338,12 @@ export default function UserFiles({ user }: UserFilesProps) {
                 <div className="flex space-x-2 ml-4">
                   <a
                     href={file.fileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200"
+                    download={file.fileName || 'download'}
+                    className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 flex items-center gap-1"
                   >
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                     View/Download
                   </a>
                   <button
@@ -292,7 +373,12 @@ export default function UserFiles({ user }: UserFilesProps) {
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-gray-900">Upload New File</h3>
               <button
-                onClick={() => setShowUploadForm(false)}
+                onClick={() => {
+                  setShowUploadForm(false)
+                  setSelectedFile(null)
+                  setSubmitMessage('')
+                  uploadForm.reset()
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -301,7 +387,21 @@ export default function UserFiles({ user }: UserFilesProps) {
               </button>
             </div>
 
-            <form onSubmit={uploadForm.handleSubmit(handleSubmitFile)} className="space-y-4">
+            <form 
+              onSubmit={(e) => {
+                console.log('🔥 FORM SUBMIT EVENT', e)
+                console.log('Form state:', uploadForm.formState)
+                const submitHandler = uploadForm.handleSubmit(
+                  handleSubmitFile,
+                  (errors) => {
+                    console.log('🚨 FORM VALIDATION ERRORS:', errors)
+                    console.log('🚨 DETAILED ERRORS:', JSON.stringify(errors, null, 2))
+                  }
+                )
+                submitHandler(e)
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Select File
@@ -343,14 +443,30 @@ export default function UserFiles({ user }: UserFilesProps) {
               <div className="flex space-x-3 pt-4">
                 <button
                   type="submit"
-                  disabled={uploadingFile || !uploadForm.watch('fileUrl')}
+                  disabled={uploadingFile || !selectedFile}
+                  onClick={(e) => {
+                    console.log('🔥 BUTTON CLICKED - direct onClick handler')
+                    console.log('Form errors:', uploadForm.formState.errors)
+                    console.log('Form isValid:', uploadForm.formState.isValid)
+                    console.log('Form values:', uploadForm.getValues())
+                    console.log('Selected file:', selectedFile)
+                    // Trigger validation manually to see what's failing
+                    uploadForm.trigger().then(isValid => {
+                      console.log('Manual validation result:', isValid)
+                    })
+                  }}
                   className="flex-1 bg-orange-600 text-white py-2 px-4 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 disabled:opacity-50"
                 >
                   Save File
                 </button>
                 <button
                   type="button"
-                  onClick={() => setShowUploadForm(false)}
+                  onClick={() => {
+                    setShowUploadForm(false)
+                    setSelectedFile(null)
+                    setSubmitMessage('')
+                    uploadForm.reset()
+                  }}
                   className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
                 >
                   Cancel

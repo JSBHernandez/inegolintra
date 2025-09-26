@@ -19,6 +19,8 @@ interface PasswordChangeForm {
 }
 
 interface ProfileForm {
+  name: string
+  position: string
   address: string
   country: string
   personalPhone: string
@@ -52,6 +54,8 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
   })
 
   const [profileForm, setProfileForm] = useState<ProfileForm>({
+    name: user.name || '',
+    position: user.position || '',
     address: user.address || '',
     country: user.country || '',
     personalPhone: user.personalPhone || '',
@@ -194,6 +198,8 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
         // Update local form with the new data
         if (data.data) {
           setProfileForm({
+            name: data.data.name || '',
+            position: data.data.position || '',
             address: data.data.address || '',
             country: data.data.country || '',
             personalPhone: data.data.personalPhone || '',
@@ -227,7 +233,21 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="px-4 sm:px-6 lg:px-8">
+      {/* Header */}
+      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">
+              My Profile
+            </h1>
+            <p className="text-gray-600">
+              Manage your personal information and account settings
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow-sm">
         {/* Tab Navigation */}
         <div className="border-b border-gray-200">
@@ -268,18 +288,38 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Full Name
                     </label>
-                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
-                      {user.name}
-                    </div>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        value={profileForm.name}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter full name"
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+                        {user.name}
+                      </div>
+                    )}
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Position/Role
                     </label>
-                    <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
-                      {user.position}
-                    </div>
+                    {isEditingProfile ? (
+                      <input
+                        type="text"
+                        value={profileForm.position}
+                        onChange={(e) => setProfileForm(prev => ({ ...prev, position: e.target.value }))}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter position/role"
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
+                        {user.position}
+                      </div>
+                    )}
                   </div>
 
                   <div>

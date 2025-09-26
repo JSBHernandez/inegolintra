@@ -30,7 +30,7 @@ export async function GET(
     }
 
     // Get content items
-    const contentItems = await db.$queryRaw`
+    const rawContentItems = await db.$queryRaw`
       SELECT 
         id, title, description, contentType, url, fileData, fileName, fileSize, 
         \`order\`, isActive, moduleId, 
@@ -45,6 +45,32 @@ export async function GET(
         AND createdAt != '0000-00-00 00:00:00'
       ORDER BY \`order\` ASC
     `
+
+    // Process content items to generate proper URLs for files
+    const contentItems = Array.isArray(rawContentItems) ? rawContentItems.map((item: {
+      id: number
+      title: string
+      description?: string
+      contentType: string
+      url?: string
+      fileData?: string
+      fileName?: string
+      fileSize?: number
+      order: number
+      isActive: boolean
+      moduleId: number
+      createdAt: Date
+      updatedAt: Date
+    }) => {
+      // If the item has fileData but no url, generate a download URL
+      if (item.fileData && !item.url) {
+        return {
+          ...item,
+          url: `/api/training-files/${item.id}`
+        }
+      }
+      return item
+    }) : []
 
     return NextResponse.json({ success: true, data: contentItems })
   } catch (error) {
@@ -71,16 +97,20 @@ export async function POST(
     }
 
     const body = await request.json()
+    console.log('Content creation request body:', JSON.stringify(body, null, 2))
     
     // Validate input
     const validation = trainingModuleContentSchema.safeParse(body)
     if (!validation.success) {
+      console.error('Validation failed:', validation.error.issues)
       return NextResponse.json({ 
         success: false, 
         error: 'Validation failed',
         details: validation.error.issues
       }, { status: 400 })
     }
+
+    console.log('Validation passed, data:', validation.data)
 
     const { title, description, contentType, url, fileData, fileName, fileSize, order, isActive } = validation.data
 

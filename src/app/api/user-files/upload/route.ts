@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import path from 'path'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Upload request received')
+    console.log('User file upload request received')
     
     const authUser = await verifyAuth(request)
     if (!authUser) {
@@ -13,21 +12,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log(`Upload request from user: ${authUser.id}`)
+    console.log(`User file upload request from user: ${authUser.id}`)
 
     const data = await request.formData()
     const file: File | null = data.get('file') as unknown as File
-    const type: string | null = data.get('type') as string
+    const description: string | null = data.get('description') as string
 
-    console.log('Form data parsed, file present:', !!file)
-    console.log('File details:', file ? { name: file.name, size: file.size, type: file.type } : 'No file')
+    console.log('Form data parsed:', { 
+      hasFile: !!file,
+      description: description || 'No description provided',
+      fileDetails: file ? { name: file.name, size: file.size, type: file.type } : 'No file'
+    })
 
     if (!file) {
       console.log('Upload failed: No file in form data')
       return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 })
     }
 
-    // Validate file type - Allow documents and images
+    // Validate file type - Allow documents and images for personal files
     const allowedTypes = [
       // Images
       'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
@@ -54,16 +56,14 @@ export async function POST(request: NextRequest) {
 
     console.log('File type validation passed')
 
-    // Validate file size (10MB limit for documents, 5MB for images)
-    const isImage = file.type.startsWith('image/')
-    const maxSize = isImage ? 5 * 1024 * 1024 : 10 * 1024 * 1024 // 5MB for images, 10MB for documents
+    // Validate file size (2MB limit for personal files to match component limit)
+    const maxSize = 2 * 1024 * 1024 // 2MB
     
     if (file.size > maxSize) {
-      const maxSizeMB = maxSize / (1024 * 1024)
       console.log(`Upload failed: File size ${file.size} exceeds limit ${maxSize}`)
       return NextResponse.json({ 
         success: false, 
-        error: `File size must be less than ${maxSizeMB}MB` 
+        error: `File size must be less than 2MB` 
       }, { status: 400 })
     }
 
@@ -78,51 +78,54 @@ export async function POST(request: NextRequest) {
     const base64Data = buffer.toString('base64')
     const dataUrl = `data:${file.type};base64,${base64Data}`
 
-    // Generate unique identifier for the file
-    const timestamp = Date.now()
-    const originalName = file.name.replace(/\s+/g, '-').toLowerCase()
-    const extension = path.extname(originalName)
-    const baseName = path.basename(originalName, extension)
-    const fileType = isImage ? 'img' : 'doc'
-    const uniqueId = `${fileType}-${authUser.id}-${timestamp}-${baseName}`
+    console.log(`Creating user file record for: ${file.name}`)
 
-    console.log(`Creating file record in database for: ${file.name}`)
+    // Use provided description or default
+    const fileDescription = description || 'Personal file uploaded by user'
 
-    // Create a file record in database (for profile photos and other legacy uses)
-    const fileRecord = await db.userFile.create({
-      data: {
-        fileName: file.name,
-        fileUrl: dataUrl, // Store the data URL directly
-        fileType: file.type,
-        fileSize: file.size,
-        description: type === 'profile' ? 'Profile photo' : 'Uploaded file',
-        userId: authUser.id,
-        uploadedById: authUser.id,
-      }
-    })
+    // Create a user file record using raw query
+    const _insertResult = await db.$queryRaw`
+      INSERT INTO user_files 
+      (fileName, fileUrl, fileType, fileSize, description, userId, uploadedById, createdAt, updatedAt)
+      VALUES 
+      (${file.name}, ${dataUrl}, ${file.type}, ${file.size}, ${fileDescription}, ${authUser.id}, ${authUser.id}, NOW(), NOW())
+    `
 
-    console.log(`File stored in database with ID: ${fileRecord.id}`)
+    // Get the created record ID
+    const createdIdResult = await db.$queryRaw`SELECT LAST_INSERT_ID() as id`
+    const rawFileId = Array.isArray(createdIdResult) && createdIdResult.length > 0
+      ? (createdIdResult[0] as { id: bigint }).id
+      : null
 
-    // Return a URL that points to our file serving endpoint
-    const publicUrl = `/api/files/${fileRecord.id}`
+    if (!rawFileId) {
+      throw new Error('Failed to create user file record')
+    }
 
-    console.log(`Upload successful, file accessible at: ${publicUrl}`)
+    // Convert BigInt to regular number for JSON serialization
+    const fileId = Number(rawFileId)
+
+    console.log(`User file stored with ID: ${fileId}`)
+
+    // Return a URL that points to our user file serving endpoint
+    const publicUrl = `/api/files/${fileId}`
+
+    console.log(`User file upload successful, file accessible at: ${publicUrl}`)
 
     return NextResponse.json({ 
       success: true, 
       url: publicUrl,
-      fileId: fileRecord.id,
-      filename: uniqueId,
+      fileId: fileId,
+      filename: file.name,
       originalName: file.name,
       size: file.size,
       type: file.type
     })
 
   } catch (error) {
-    console.error('File upload error:', error)
+    console.error('User file upload error:', error)
     return NextResponse.json({ 
       success: false, 
-      error: 'Failed to upload file' 
+      error: 'Failed to upload user file' 
     }, { status: 500 })
   }
 }

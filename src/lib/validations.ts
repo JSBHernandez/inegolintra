@@ -45,6 +45,23 @@ export const updateProfileSchema = z.object({
   ).optional().or(z.literal('')),
 })
 
+// Combined schema for complete profile update (basic + additional info)
+export const updateCompleteProfileSchema = z.object({
+  // Basic information
+  name: z.string().min(1, 'Name is required').max(255, 'Name is too long'),
+  position: z.string().min(1, 'Position is required').max(100, 'Position is too long'),
+  // Additional information
+  address: z.string().max(500, 'Address is too long').optional().or(z.literal('')),
+  country: z.string().max(100, 'Country name is too long').optional().or(z.literal('')),
+  personalPhone: z.string().max(20, 'Phone number is too long').optional().or(z.literal('')),
+  emergencyPhone: z.string().max(20, 'Emergency phone is too long').optional().or(z.literal('')),
+  emergencyContactName: z.string().max(255, 'Emergency contact name is too long').optional().or(z.literal('')),
+  profilePhoto: z.string().refine(
+    (val) => val === '' || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:'),
+    'Invalid photo URL or data format'
+  ).optional().or(z.literal('')),
+})
+
 export const loginSchema = z.object({
   username: z.string().min(1, 'Username/Email is required').optional(),
   email: z.string().min(1, 'Username/Email is required').optional(),
@@ -117,8 +134,32 @@ export const trainingModuleContentSchema = z.object({
   isActive: z.boolean().default(true),
   moduleId: z.number().int(),
 }).refine((data) => {
-  // For URLs (VIDEO, DOCUMENT, LINK), validate URL format
-  if ((data.contentType === 'VIDEO' || data.contentType === 'DOCUMENT' || data.contentType === 'LINK' || data.contentType === 'YOUTUBE') && data.url) {
+  // For VIDEO and YOUTUBE, validate URL format if provided
+  if ((data.contentType === 'VIDEO' || data.contentType === 'YOUTUBE') && data.url) {
+    try {
+      new URL(data.url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  
+  // For DOCUMENT, allow both URLs and relative paths (uploaded files)
+  if (data.contentType === 'DOCUMENT' && data.url) {
+    // Allow full URLs or relative paths (like /uploads/file.pdf)
+    if (data.url.startsWith('http://') || data.url.startsWith('https://') || data.url.startsWith('/')) {
+      return true;
+    }
+    try {
+      new URL(data.url);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  
+  // For LINK, validate URL format
+  if (data.contentType === 'LINK' && data.url) {
     try {
       new URL(data.url);
       return true;
@@ -165,6 +206,15 @@ export const uploadUserFileSchema = z.object({
   fileSize: z.number().int().min(1, 'File size must be greater than 0'),
   description: z.string().max(500, 'Description is too long').optional(),
   userId: z.number().int().min(1, 'User ID is required').optional(), // Optional for admin uploads
+})
+
+// Schema for the upload form (before file is uploaded)
+export const uploadUserFileFormSchema = z.object({
+  fileName: z.string().min(1, 'File name is required').max(255, 'File name is too long'),
+  fileUrl: z.string().optional(), // Optional for form validation
+  fileType: z.string().min(1, 'File type is required'),
+  fileSize: z.number().int().min(1, 'File size must be greater than 0'),
+  description: z.string().max(500, 'Description is too long').optional(),
 })
 
 // Constants for dropdowns
@@ -233,6 +283,7 @@ export const countryOptions = [
 export type CreateUserFormData = z.infer<typeof createUserSchema>
 export type UpdateUserFormData = z.infer<typeof updateUserSchema>
 export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>
+export type UpdateCompleteProfileFormData = z.infer<typeof updateCompleteProfileSchema>
 export type LoginFormData = z.infer<typeof loginSchema>
 export type PermissionRequestFormData = z.infer<typeof permissionRequestSchema>
 export type IncidentReportFormData = z.infer<typeof incidentReportSchema>
@@ -241,4 +292,4 @@ export type TrainingModuleContentFormData = z.infer<typeof trainingModuleContent
 export type PasswordChangeFormData = z.infer<typeof passwordChangeSchema>
 export type CreateNewsFormData = z.infer<typeof createNewsSchema>
 export type UpdateNewsFormData = z.infer<typeof updateNewsSchema>
-export type UploadUserFileFormData = z.infer<typeof uploadUserFileSchema>
+export type UploadUserFileFormData = z.infer<typeof uploadUserFileFormSchema>

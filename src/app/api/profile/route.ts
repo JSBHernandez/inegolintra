@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyAuth } from '@/lib/auth'
-import { updateProfileSchema } from '@/lib/validations'
+import { updateCompleteProfileSchema } from '@/lib/validations'
 
 export async function PUT(request: NextRequest) {
   try {
@@ -11,12 +11,16 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
-    const validatedData = updateProfileSchema.parse(body)
+    const validatedData = updateCompleteProfileSchema.parse(body)
 
-    // Update user profile
+    // Update user profile (both basic and additional info)
     const updatedUser = await db.user.update({
       where: { id: authUser.id },
       data: {
+        // Basic information
+        name: validatedData.name,
+        position: validatedData.position,
+        // Additional information
         address: validatedData.address || null,
         country: validatedData.country || null,
         personalPhone: validatedData.personalPhone || null,

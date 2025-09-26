@@ -93,6 +93,22 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
     fetchModules()
   }, [])
 
+  // Helper function to get next order number for content
+  const getNextContentOrder = () => {
+    if (!moduleContent || moduleContent.length === 0) return 1
+    const maxOrder = Math.max(...moduleContent.map(content => content.order || 0))
+    return maxOrder + 1
+  }
+
+  // Update order when adding new content
+  const handleShowAddContent = () => {
+    setShowAddContent(true)
+    setContentForm(prev => ({
+      ...prev,
+      order: getNextContentOrder()
+    }))
+  }
+
   const fetchModules = async () => {
     try {
       setLoading(true)
@@ -312,16 +328,78 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
     setMessage('')
 
     try {
+      // Validation for DOCUMENT type
+      if (contentForm.contentType === 'DOCUMENT') {
+        if (!_selectedFile && !contentForm.url.trim()) {
+          setError('Please either upload a file or provide a document URL')
+          return
+        }
+      }
+
+      const finalUrl = contentForm.url
+      const finalFileName = contentForm.fileName
+      const finalFileSize = contentForm.fileSize
+
+      // Handle file upload if a file is selected
+      if (_selectedFile && contentForm.contentType === 'DOCUMENT') {
+        console.log('Uploading training file:', _selectedFile.name, 'Size:', _selectedFile.size, 'Type:', _selectedFile.type)
+        
+        const formData = new FormData()
+        formData.append('file', _selectedFile)
+        formData.append('moduleId', selectedModule.id.toString())
+        formData.append('title', contentForm.title)
+        formData.append('description', contentForm.description || `File: ${_selectedFile.name}`)
+
+        const uploadResponse = await fetch('/api/training-files', {
+          method: 'POST',
+          body: formData
+        })
+
+        console.log('Training file upload response status:', uploadResponse.status)
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json()
+          console.error('Training file upload error response:', errorData)
+          throw new Error(errorData.error || `Upload failed with status ${uploadResponse.status}`)
+        }
+
+        const uploadResult = await uploadResponse.json()
+        console.log('Training file upload result:', uploadResult)
+        
+        if (uploadResult.success) {
+          // For training files, we don't need to create additional content record
+          // The upload endpoint already created the content record
+          await fetchModuleContent(selectedModule.id)
+          setShowAddContent(false)
+          setContentForm({
+            title: '',
+            description: '',
+            contentType: 'TEXT',
+            url: '',
+            fileData: '',
+            fileName: '',
+            fileSize: 0,
+            order: 0,
+            isActive: true
+          })
+          setSelectedFile(null)
+          setMessage(`File "${_selectedFile.name}" uploaded successfully!`)
+          return // Exit early since content was already created
+        } else {
+          throw new Error(uploadResult.error || 'Failed to upload training file')
+        }
+      }
+
       const contentData = {
         title: contentForm.title,
         description: contentForm.description || undefined,
         contentType: contentForm.contentType,
-        url: contentForm.contentType === 'TEXT' && !contentForm.url.trim() 
+        url: contentForm.contentType === 'TEXT' && !finalUrl.trim() 
           ? contentForm.url  // For TEXT type, send the actual text content in url field
-          : contentForm.url || undefined,
+          : finalUrl || undefined,
         fileData: contentForm.fileData || undefined,
-        fileName: contentForm.fileName || undefined,
-        fileSize: contentForm.fileSize || undefined,
+        fileName: finalFileName || undefined,
+        fileSize: finalFileSize || undefined,
         order: contentForm.order,
         isActive: contentForm.isActive,
         moduleId: selectedModule.id
@@ -438,7 +516,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="px-4 sm:px-6 lg:px-8">
       <div className="space-y-6">
         {/* Header */}
         <div className="bg-white rounded-lg shadow-sm p-6">
@@ -472,7 +550,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
             )}
             {user.role === 'ADMIN' && currentView === 'content' && selectedModule && (
               <button
-                onClick={() => setShowAddContent(true)}
+                onClick={handleShowAddContent}
                 className="inline-flex items-center px-4 py-2 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -740,11 +818,13 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                               {content.url && (
                                 <a
                                   href={content.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="ml-auto px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
+                                  download={content.fileName || 'document'}
+                                  className="ml-auto px-4 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 transition-colors flex items-center gap-2"
                                 >
-                                  Open Document
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  Download Document
                                 </a>
                               )}
                             </div>
@@ -977,25 +1057,91 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                 )}
 
                 {contentForm.contentType === 'DOCUMENT' && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Document URL or File Name *
-                    </label>
-                    <input
-                      type="text"
-                      value={contentForm.url}
-                      onChange={(e) => setContentForm({ ...contentForm, url: e.target.value })}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      placeholder="Document URL or file name..."
-                      required
-                    />
-                    <div className="mt-2">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Document Source *
+                      </label>
+                      <div className="space-y-3">
+                        {/* File Upload Option */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 mb-2">
+                            📁 Upload Local File
+                          </label>
+                          <input
+                            type="file"
+                            accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png,.gif"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0]
+                              if (file) {
+                                setSelectedFile(file)
+                                // Auto-fill title if empty
+                                if (!contentForm.title) {
+                                  setContentForm(prev => ({ 
+                                    ...prev, 
+                                    title: file.name.replace(/\.[^/.]+$/, '') 
+                                  }))
+                                }
+                                // Set file info
+                                setContentForm(prev => ({
+                                  ...prev,
+                                  fileName: file.name,
+                                  fileSize: file.size,
+                                  url: '' // Clear URL when file is selected
+                                }))
+                              }
+                            }}
+                            className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors hover:border-gray-400"
+                          />
+                          <p className="text-sm text-gray-500 mt-1">
+                            Supported formats: PDF, Word, Excel, PowerPoint, Images (Max 10MB)
+                          </p>
+                          {_selectedFile && (
+                            <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <svg className="w-5 h-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                                <span className="text-sm text-green-700">
+                                  File selected: <strong>{_selectedFile.name}</strong> ({Math.round(_selectedFile.size / 1024)} KB)
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* URL Option */}
+                        <div>
+                          <label className="block text-sm font-medium text-gray-600 mb-2">
+                            🌐 Or Enter Document URL
+                          </label>
+                          <input
+                            type="url"
+                            value={contentForm.url}
+                            onChange={(e) => {
+                              setContentForm({ ...contentForm, url: e.target.value })
+                              if (e.target.value) {
+                                setSelectedFile(null) // Clear file when URL is entered
+                              }
+                            }}
+                            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                            placeholder="https://example.com/document.pdf"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Display Name */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Display Name (Optional)
+                      </label>
                       <input
                         type="text"
                         value={contentForm.fileName}
                         onChange={(e) => setContentForm({ ...contentForm, fileName: e.target.value })}
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                        placeholder="Display name for the document (optional)"
+                        placeholder="Custom name to display (will use filename if empty)"
                       />
                     </div>
                   </div>
@@ -1020,15 +1166,18 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Order
+                      Display Order
                     </label>
                     <input
                       type="number"
                       value={contentForm.order}
                       onChange={(e) => setContentForm({ ...contentForm, order: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
-                      min="0"
+                      min="1"
                     />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Content will be shown in this order (lower numbers appear first)
+                    </p>
                   </div>
 
                   <div className="flex items-center gap-3 pt-8">
@@ -1080,6 +1229,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth } from '@/lib/auth'
 import { db } from '@/lib/db'
-import path from 'path'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Upload request received')
+    console.log('Training file upload request received')
     
     const authUser = await verifyAuth(request)
     if (!authUser) {
@@ -13,18 +12,40 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log(`Upload request from user: ${authUser.id}`)
+    console.log(`Training file upload request from user: ${authUser.id}`)
 
     const data = await request.formData()
     const file: File | null = data.get('file') as unknown as File
-    const type: string | null = data.get('type') as string
+    const moduleId: string | null = data.get('moduleId') as string
+    const title: string | null = data.get('title') as string
+    const description: string | null = data.get('description') as string
 
-    console.log('Form data parsed, file present:', !!file)
-    console.log('File details:', file ? { name: file.name, size: file.size, type: file.type } : 'No file')
+    console.log('Form data parsed:', { 
+      hasFile: !!file, 
+      moduleId, 
+      title, 
+      description,
+      fileDetails: file ? { name: file.name, size: file.size, type: file.type } : 'No file'
+    })
 
     if (!file) {
       console.log('Upload failed: No file in form data')
       return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 })
+    }
+
+    if (!moduleId || !title) {
+      console.log('Upload failed: Missing required fields')
+      return NextResponse.json({ success: false, error: 'Module ID and title are required' }, { status: 400 })
+    }
+
+    // Verify trainingModule exists and user has access
+    const trainingModule = await db.trainingModule.findUnique({
+      where: { id: parseInt(moduleId) }
+    })
+
+    if (!trainingModule) {
+      console.log(`Upload failed: Module ${moduleId} not found`)
+      return NextResponse.json({ success: false, error: 'Training module not found' }, { status: 404 })
     }
 
     // Validate file type - Allow documents and images
@@ -78,51 +99,63 @@ export async function POST(request: NextRequest) {
     const base64Data = buffer.toString('base64')
     const dataUrl = `data:${file.type};base64,${base64Data}`
 
-    // Generate unique identifier for the file
-    const timestamp = Date.now()
-    const originalName = file.name.replace(/\s+/g, '-').toLowerCase()
-    const extension = path.extname(originalName)
-    const baseName = path.basename(originalName, extension)
-    const fileType = isImage ? 'img' : 'doc'
-    const uniqueId = `${fileType}-${authUser.id}-${timestamp}-${baseName}`
+    // Get the next order for this module using raw query
+    const orderResult = await db.$queryRaw`
+      SELECT MAX(\`order\`) as maxOrder 
+      FROM training_module_content 
+      WHERE moduleId = ${parseInt(moduleId)}
+    `
+    const maxOrder = Array.isArray(orderResult) && orderResult.length > 0 
+      ? (orderResult[0] as { maxOrder: number | null }).maxOrder || 0 
+      : 0
+    const nextOrder = maxOrder + 1
 
-    console.log(`Creating file record in database for: ${file.name}`)
+    console.log(`Creating training module content record for: ${file.name}`)
 
-    // Create a file record in database (for profile photos and other legacy uses)
-    const fileRecord = await db.userFile.create({
-      data: {
-        fileName: file.name,
-        fileUrl: dataUrl, // Store the data URL directly
-        fileType: file.type,
-        fileSize: file.size,
-        description: type === 'profile' ? 'Profile photo' : 'Uploaded file',
-        userId: authUser.id,
-        uploadedById: authUser.id,
-      }
-    })
+    // Create a content record for the training module using raw query
+    const _insertResult = await db.$queryRaw`
+      INSERT INTO training_module_content 
+      (title, description, contentType, fileData, fileName, fileSize, \`order\`, moduleId, isActive, createdAt, updatedAt)
+      VALUES 
+      (${title}, ${description || `File: ${file.name}`}, 'DOCUMENT', ${dataUrl}, ${file.name}, ${file.size}, ${nextOrder}, ${parseInt(moduleId)}, true, NOW(), NOW())
+    `
 
-    console.log(`File stored in database with ID: ${fileRecord.id}`)
+    // Get the created record ID
+    const createdIdResult = await db.$queryRaw`SELECT LAST_INSERT_ID() as id`
+    const rawContentId = Array.isArray(createdIdResult) && createdIdResult.length > 0
+      ? (createdIdResult[0] as { id: bigint }).id
+      : null
 
-    // Return a URL that points to our file serving endpoint
-    const publicUrl = `/api/files/${fileRecord.id}`
+    if (!rawContentId) {
+      throw new Error('Failed to create content record')
+    }
 
-    console.log(`Upload successful, file accessible at: ${publicUrl}`)
+    // Convert BigInt to regular number for JSON serialization
+    const contentId = Number(rawContentId)
+
+    console.log(`Training module content stored with ID: ${contentId}`)
+
+    // Return a URL that points to our training file serving endpoint
+    const publicUrl = `/api/training-files/${contentId}`
+
+    console.log(`Training file upload successful, file accessible at: ${publicUrl}`)
 
     return NextResponse.json({ 
       success: true, 
       url: publicUrl,
-      fileId: fileRecord.id,
-      filename: uniqueId,
+      fileId: contentId,
+      filename: file.name,
       originalName: file.name,
       size: file.size,
-      type: file.type
+      type: file.type,
+      contentId: contentId
     })
 
   } catch (error) {
-    console.error('File upload error:', error)
+    console.error('Training file upload error:', error)
     return NextResponse.json({ 
       success: false, 
-      error: 'Failed to upload file' 
+      error: 'Failed to upload training file' 
     }, { status: 500 })
   }
 }

@@ -20,10 +20,36 @@ export async function GET(request: NextRequest) {
     }
 
     // For admins: get files for specific user or all users
-    // For regular users: get only their own files
-    const whereClause = authUser.role === 'ADMIN' 
-      ? (userId ? { userId: parseInt(userId) } : {})
-      : { userId: authUser.id }
+    // For regular users: get files assigned to them OR uploaded by them
+    let whereClause
+    
+    if (authUser.role === 'ADMIN') {
+      if (userId) {
+        // Admin viewing specific user: show files assigned to that user OR uploaded by that user
+        whereClause = {
+          OR: [
+            { userId: parseInt(userId) },           // Files assigned to the user
+            { uploadedById: parseInt(userId) }      // Files uploaded by the user
+          ]
+        }
+      } else {
+        // Admin viewing all files
+        whereClause = {}
+      }
+    } else {
+      // Regular user: show files assigned to them OR uploaded by them
+      whereClause = {
+        OR: [
+          { userId: authUser.id },        // Files assigned to the user
+          { uploadedById: authUser.id }   // Files uploaded by the user
+        ]
+      }
+    }
+
+    console.log('🔍 User files query debug:')
+    console.log('- Auth user:', { id: authUser.id, role: authUser.role, name: authUser.name })
+    console.log('- Where clause:', JSON.stringify(whereClause, null, 2))
+    console.log('- UserId param:', userId)
 
     const files = await db.userFile.findMany({
       where: whereClause,
@@ -46,6 +72,14 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc'
       }
+    })
+
+    console.log('🔍 Query results:')
+    console.log('- Files found:', files.length)
+    files.forEach((file, index) => {
+      console.log(`  ${index + 1}. ${file.fileName}`)
+      console.log(`     - userId: ${file.userId}, uploadedById: ${file.uploadedById}`)
+      console.log(`     - User: ${file.user?.name}, UploadedBy: ${file.uploadedBy?.name}`)
     })
 
     return NextResponse.json({ 
