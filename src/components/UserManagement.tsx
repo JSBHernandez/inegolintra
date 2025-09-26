@@ -170,7 +170,7 @@ export default function UserManagement() {
   }
 
   return (
-    <>
+    <div className="px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex justify-between items-center">
@@ -572,6 +572,6 @@ export default function UserManagement() {
           onUserDelete={handleUserProfileDelete}
         />
       )}
-    </>
-  )
+    </div>
+  );
 }

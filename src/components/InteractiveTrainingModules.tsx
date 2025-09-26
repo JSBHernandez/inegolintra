@@ -1229,7 +1229,6 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
           </div>
         </div>
       )}
-      </div>
     </div>
-  )
+  );
 }

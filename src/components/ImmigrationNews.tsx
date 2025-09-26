@@ -106,12 +106,7 @@ export default function ImmigrationNews() {
   }
 
   return (
-    <>
-      {/* TEST: Full width container */}
-      <div className="w-full bg-red-100 p-2 mb-4 border-2 border-red-500">
-        <p className="text-red-800 font-bold">TEST: This should span the full width of the screen</p>
-      </div>
-      
+    <div className="px-4 sm:px-6 lg:px-8">
       {/* Header */}
       <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
@@ -244,6 +239,6 @@ export default function ImmigrationNews() {
           </div>
         </div>
       </div>
-    </>
-  )
+    </div>
+  );
 }
