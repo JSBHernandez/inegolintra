@@ -170,24 +170,24 @@ export default function UserManagement() {
   }
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
+    <div className="px-3 sm:px-6 lg:px-8">
       {/* Header */}
-      <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-        <div className="flex justify-between items-center">
+      <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center space-y-4 sm:space-y-0">
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">User Management</h2>
-            <p className="mt-1 text-gray-600">Manage system users and their roles</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900">User Management</h2>
+            <p className="mt-1 text-sm sm:text-base text-gray-600">Manage system users and their roles</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <button
               onClick={fetchUsers}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium"
+              className="bg-blue-600 text-white px-3 sm:px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors font-medium text-sm"
             >
               🔄 Refresh
             </button>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="bg-orange-600 text-white px-6 py-2 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors font-medium"
+              className="bg-orange-600 text-white px-4 sm:px-6 py-2 rounded-md hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 transition-colors font-medium text-sm"
             >
               + Create New User
             </button>
@@ -212,15 +212,16 @@ export default function UserManagement() {
         </div>
       )}
 
-      {/* Users Table */}
+      {/* Users List */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">
+        <div className="px-4 sm:px-6 py-4 border-b border-gray-200">
+          <h3 className="text-base sm:text-lg font-medium text-gray-900">
             System Users ({users.length})
           </h3>
         </div>
         
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
@@ -324,12 +325,100 @@ export default function UserManagement() {
             </tbody>
           </table>
         </div>
+
+        {/* Mobile Card View */}
+        <div className="lg:hidden divide-y divide-gray-200">
+          {users.map((user) => (
+            <div key={user.id} className="p-4">
+              <div className="flex items-start space-x-3 mb-3">
+                {/* Profile Photo */}
+                <div className="flex-shrink-0">
+                  {user.profilePhoto ? (
+                    <img 
+                      src={user.profilePhoto} 
+                      alt={user.name}
+                      className="h-12 w-12 rounded-full object-cover border-2 border-gray-200"
+                    />
+                  ) : (
+                    <div className="h-12 w-12 rounded-full bg-gray-300 flex items-center justify-center">
+                      <span className="text-gray-600 font-medium text-lg">
+                        {user.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
+                </div>
+                
+                {/* User Info */}
+                <div className="flex-1 min-w-0">
+                  <button
+                    onClick={() => setSelectedUserProfile(user)}
+                    className="text-base font-medium text-blue-600 hover:text-blue-800 hover:underline cursor-pointer transition-colors"
+                  >
+                    {user.name}
+                  </button>
+                  <div className="text-sm text-gray-500">{user.email}</div>
+                  <div className="text-sm text-gray-400">{user.position}</div>
+                  
+                  {/* Role & Status */}
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                      user.role === 'ADMIN' 
+                        ? 'bg-purple-100 text-purple-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {user.role}
+                    </span>
+                    <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${
+                      user.isActive
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-red-100 text-red-800'
+                    }`}>
+                      {user.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+
+                  {/* Contact Info */}
+                  {user.personalPhone && (
+                    <div className="mt-2 text-sm text-gray-600">
+                      <span className="text-gray-500">📞</span> {user.personalPhone}
+                    </div>
+                  )}
+                  
+                  {/* Action Buttons */}
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => {
+                        setEditingUser(user)
+                        editForm.reset(user)
+                      }}
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    >
+                      ✏️ Edit
+                    </button>
+                    <button
+                      onClick={() => setShowUserFiles(user)}
+                      className="text-green-600 hover:text-green-800 text-sm font-medium"
+                    >
+                      📁 Files
+                    </button>
+                    <button
+                      onClick={() => _handleDeleteUser(user.id)}
+                      className="text-red-600 hover:text-red-800 text-sm font-medium"
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Create User Modal */}
       {showCreateForm && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-          <div className="relative bg-white rounded-lg shadow-xl p-6 m-4 max-w-md w-full">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center p-4">
+          <div className="relative bg-white rounded-lg shadow-xl p-4 sm:p-6 m-4 max-w-md w-full max-h-full overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-bold text-gray-900">Create New User</h3>
               <button

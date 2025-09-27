@@ -13,6 +13,7 @@ import {
   NewsManagement,
   ImmigrationNews
 } from './index'
+import EmailTester from './EmailTester'
 
 interface DashboardProps {
   user: AuthUser | null
@@ -105,6 +106,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     { id: 'training', label: 'Training', icon: '📚', available: true },
     { id: 'users', label: 'User Management', icon: '👤', available: isAdmin },
     { id: 'profile', label: 'My Profile', icon: '👨‍💼', available: true },
+    // { id: 'email-tester', label: 'Email Tester', icon: '🧪', available: isAdmin }, // Hidden - debug tool
   ]
 
   const renderContent = () => {
@@ -123,30 +125,32 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         return <InteractiveTrainingModules user={currentUser} />
       case 'profile':
         return <MyProfile user={currentUser} onProfileUpdated={handleProfileUpdate} onUserDataRefresh={refreshUserData} />
+      case 'email-tester':
+        return <EmailTester />
       default:
         return (
-          <div className="px-4 sm:px-6 lg:px-8">
+          <div className="px-3 sm:px-6 lg:px-8">
             {/* Welcome Section */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                 Welcome to Inegol Intranet, {currentUser.name}
               </h2>
-              <p className="text-gray-600">{currentUser.position}</p>
-              <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+              <p className="text-sm sm:text-base text-gray-600">{currentUser.position}</p>
+              <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-xs sm:text-sm text-gray-500">
                 <span>Role: {currentUser.role === 'ADMIN' ? 'Administrator' : 'Agent'}</span>
-                <span>•</span>
+                <span className="hidden sm:block">•</span>
                 <span>Last login: {new Date().toLocaleDateString()}</span>
               </div>
             </div>
 
             {/* Latest News Section */}
-            <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold text-gray-900">Latest News</h2>
+            <div className="bg-white rounded-lg shadow-sm p-4 sm:p-6 mb-4 sm:mb-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 space-y-2 sm:space-y-0">
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Latest News</h2>
                 {isAdmin && (
                   <button
                     onClick={() => setActiveModule('news')}
-                    className="text-sm text-orange-600 hover:text-orange-700 font-medium"
+                    className="text-sm text-orange-600 hover:text-orange-700 font-medium self-start sm:self-auto"
                   >
                     Manage →
                   </button>
@@ -158,28 +162,27 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-orange-600"></div>
                 </div>
               ) : news.length > 0 ? (
-                  <div className="space-y-6">
+                  <div className="space-y-4 sm:space-y-6">
                   {news.slice(0, 6).map((article) => (
-                    <div key={article.id} className="bg-white rounded-lg shadow-sm p-6 border">
-                      <h3 className="text-2xl font-bold text-gray-900 mb-2">{article.title}</h3>
-                      <p className="text-gray-600 mb-4 text-base leading-relaxed">{article.content}</p>
+                    <div key={article.id} className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border">
+                      <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">{article.title}</h3>
+                      <p className="text-gray-600 mb-3 sm:mb-4 text-sm sm:text-base leading-relaxed">{article.content}</p>
                       
                       {article.imageUrl && (
-                        <div className="mb-4">
+                        <div className="mb-3 sm:mb-4">
                           <img 
                             src={article.imageUrl} 
                             alt={article.title}
-                            className="max-w-md h-auto rounded-lg object-cover shadow-sm border"
-                            style={{ maxHeight: '300px' }}
+                            className="w-full max-w-full sm:max-w-2xl h-auto rounded-lg object-contain shadow-sm border"
                             onError={(_e) => console.error('Dashboard image load error:', article.title)}
                             onLoad={() => console.log('Dashboard image loaded successfully:', article.title)}
                           />
                         </div>
                       )}
                       
-                      <div className="mt-4 flex items-center space-x-4 text-sm text-gray-500">
+                      <div className="mt-3 sm:mt-4 flex flex-col sm:flex-row sm:items-center sm:space-x-4 space-y-1 sm:space-y-0 text-xs sm:text-sm text-gray-500">
                         <span>Published: {new Date(article.createdAt).toLocaleDateString()}</span>
-                        <span>•</span>
+                        <span className="hidden sm:block">•</span>
                         <span>By: {article.author?.name || 'Administrator'}</span>
                       </div>
                     </div>
@@ -190,10 +193,10 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
               )}
               
               {news.length > 6 && (
-                <div className="mt-6 text-center">
+                <div className="mt-4 sm:mt-6 text-center">
                   <button
                     onClick={() => setActiveModule('news')}
-                    className="text-orange-600 hover:text-orange-700 font-medium"
+                    className="text-orange-600 hover:text-orange-700 font-medium text-sm sm:text-base"
                   >
                     View all {news.length} articles →
                   </button>
@@ -287,49 +290,51 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
     <div className="min-h-screen bg-gray-100 flex flex-col">
       {/* Header */}
       <header className="bg-white shadow-sm flex-shrink-0">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+        <div className="w-full px-3 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-3 sm:py-4">
             {/* Logo and Title */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 min-w-0">
               <Image
                 src="/LOGO-CABEZALN-PNG.png"
                 alt="Inegol Law Logo"
-                width={120}
-                height={48}
-                className="object-contain"
+                width={80}
+                height={32}
+                className="object-contain sm:w-[120px] sm:h-[48px] flex-shrink-0"
                 priority
               />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Inegol Intranet</h1>
-                <p className="text-sm text-gray-600">Employee Portal</p>
+              <div className="min-w-0">
+                <h1 className="text-base sm:text-xl font-bold text-gray-900 truncate">Inegol Intranet</h1>
+                <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">Employee Portal</p>
+                <p className="text-xs text-gray-600 sm:hidden">{currentUser.role}</p>
               </div>
             </div>
 
             {/* Right side controls */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-1 sm:space-x-4 flex-shrink-0">
               {/* Search Button */}
               <button
                 onClick={() => setShowSearch(!showSearch)}
                 className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md"
                 title="Global Search"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
               </button>
 
-              {/* User Info */}
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">{currentUser.name}</p>
-                <p className="text-xs text-gray-600">{currentUser.position}</p>
+              {/* User Info - Hidden on small screens */}
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-medium text-gray-900 truncate max-w-[150px]">{currentUser.name}</p>
+                <p className="text-xs text-gray-600 truncate max-w-[150px]">{currentUser.position}</p>
               </div>
 
               {/* Logout Button */}
               <button
                 onClick={onLogout}
-                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors text-sm"
+                className="bg-red-600 text-white px-2 py-1.5 sm:px-4 sm:py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors text-xs sm:text-sm font-medium"
               >
-                Logout
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Exit</span>
               </button>
             </div>
           </div>
@@ -347,22 +352,23 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
 
       {/* Navigation */}
       <nav className="bg-white shadow-sm border-b border-gray-200 flex-shrink-0">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8 overflow-x-auto">
+        <div className="w-full px-3 sm:px-6 lg:px-8">
+          <div className="flex space-x-1 sm:space-x-8 overflow-x-auto scrollbar-hide">
             {menuItems
               .filter(item => item.available)
               .map(item => (
                 <button
                   key={item.id}
                   onClick={() => setActiveModule(item.id)}
-                  className={`flex items-center space-x-2 py-4 px-3 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                  className={`flex items-center space-x-1 sm:space-x-2 py-3 sm:py-4 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap transition-colors flex-shrink-0 ${
                     activeModule === item.id
                       ? 'border-orange-500 text-orange-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  <span className="text-lg">{item.icon}</span>
-                  <span>{item.label}</span>
+                  <span className="text-sm sm:text-lg">{item.icon}</span>
+                  <span className="hidden sm:inline">{item.label}</span>
+                  <span className="sm:hidden text-xs">{item.label.split(' ')[0]}</span>
                 </button>
               ))}
           </div>
@@ -370,26 +376,26 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 w-full py-8">
+      <main className="flex-1 w-full py-4 sm:py-8 px-3 sm:px-0">
         {renderContent()}
       </main>
 
       {/* Footer */}
-      <footer className="bg-orange-600 text-white py-8 flex-shrink-0">
-        <div className="w-full px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="mb-4 md:mb-0">
-              <p className="text-sm">
+      <footer className="bg-orange-600 text-white py-6 sm:py-8 flex-shrink-0">
+        <div className="w-full px-3 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-center space-y-3 md:space-y-0">
+            <div className="text-center md:text-left">
+              <p className="text-xs sm:text-sm">
                 © 2025 BarbaInegol Law - All rights reserved
               </p>
             </div>
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-4 sm:space-x-6">
               <button
                 onClick={() => {
                   // TODO: Future implementation - redirect to Office Policy Manual subpage
                   console.log('Office Policy Manual - Coming Soon')
                 }}
-                className="text-orange-100 hover:text-white transition-colors text-sm font-medium underline decoration-1 underline-offset-2 hover:decoration-2"
+                className="text-orange-100 hover:text-white transition-colors text-xs sm:text-sm font-medium underline decoration-1 underline-offset-2 hover:decoration-2"
               >
                 Office Policy Manual
               </button>

@@ -56,20 +56,20 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <div className="text-center mb-8">
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+      <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6 sm:p-8">
+        <div className="text-center mb-6 sm:mb-8">
           <div className="flex justify-center mb-4">
             <Image
               src="/LOGO-CABEZALN-PNG.png"
               alt="Inegol Law Logo"
-              width={200}
-              height={80}
-              className="object-contain"
+              width={150}
+              height={60}
+              className="object-contain sm:w-[200px] sm:h-[80px]"
               priority
             />
           </div>
-          <p className="text-xl text-gray-600">Client Portal</p>
+          <p className="text-lg sm:text-xl text-gray-600">Client Portal</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

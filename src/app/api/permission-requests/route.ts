@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { verifyAuth } from '@/lib/auth'
 import { permissionRequestSchema } from '@/lib/validations'
+import { emailService } from '@/lib/email'
 
 export async function GET(request: NextRequest) {
   try {
@@ -146,6 +147,41 @@ export async function PUT(request: NextRequest) {
         }
       }
     })
+
+    // Send email notification to the agent
+    console.log('🚀 Attempting to send permission decision email...')
+    console.log('- User email:', updatedRequest.user.email)
+    console.log('- User name:', updatedRequest.user.name)
+    console.log('- Request type:', updatedRequest.requestType)
+    console.log('- Decision:', status)
+    console.log('- Admin note:', rejectedReason || 'None')
+    
+    try {
+      const emailSent = await emailService.sendPermissionDecisionEmail(
+        updatedRequest.user.email,
+        updatedRequest.user.name,
+        updatedRequest.requestType,
+        status as 'APPROVED' | 'REJECTED',
+        updatedRequest.startDate.toISOString(),
+        updatedRequest.endDate.toISOString(),
+        updatedRequest.reason,
+        rejectedReason || undefined
+      )
+      
+      if (emailSent) {
+        console.log(`✅ Permission decision email sent successfully to ${updatedRequest.user.email}`)
+      } else {
+        console.log(`❌ Failed to send permission decision email to ${updatedRequest.user.email}`)
+      }
+    } catch (emailError) {
+      console.error('❌ Error sending permission decision email:', emailError)
+      console.error('Email error details:', {
+        name: emailError instanceof Error ? emailError.name : 'Unknown',
+        message: emailError instanceof Error ? emailError.message : 'Unknown error',
+        stack: emailError instanceof Error ? emailError.stack : 'No stack trace'
+      })
+      // Don't fail the request if email sending fails
+    }
 
     return NextResponse.json({ success: true, data: updatedRequest })
   } catch (error) {
