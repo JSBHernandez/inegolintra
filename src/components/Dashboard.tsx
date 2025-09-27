@@ -173,7 +173,7 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
                           <img 
                             src={article.imageUrl} 
                             alt={article.title}
-                            className="w-full max-w-full sm:max-w-2xl h-auto rounded-lg object-contain shadow-sm border"
+                            className="w-1/2 max-w-sm h-auto rounded-lg object-contain shadow-sm border mx-auto sm:mx-0"
                             onError={(_e) => console.error('Dashboard image load error:', article.title)}
                             onLoad={() => console.log('Dashboard image loaded successfully:', article.title)}
                           />
