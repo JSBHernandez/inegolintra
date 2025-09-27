@@ -60,6 +60,8 @@ export const updateCompleteProfileSchema = z.object({
     (val) => val === '' || val.startsWith('http://') || val.startsWith('https://') || val.startsWith('data:') || val.startsWith('/api/files/'),
     'Invalid photo URL or data format'
   ).optional().or(z.literal('')),
+  // Optional userId for admin updates
+  userId: z.number().positive().optional(),
 })
 
 export const loginSchema = z.object({

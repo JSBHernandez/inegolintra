@@ -5,7 +5,9 @@ import path from 'path'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('Upload request received')
+    console.log('⚠️  /api/upload - Legacy upload endpoint called')
+    console.log('⚠️  Request URL:', request.url)
+    console.log('⚠️  This endpoint should only be used for profile photos from MyProfile.tsx')
     
     const authUser = await verifyAuth(request)
     if (!authUser) {
@@ -13,18 +15,43 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log(`Upload request from user: ${authUser.id}`)
+    console.log(`⚠️  Legacy upload request from user: ${authUser.id} (${authUser.name})`)
 
     const data = await request.formData()
     const file: File | null = data.get('file') as unknown as File
     const type: string | null = data.get('type') as string
+    const targetUserId: string | null = data.get('targetUserId') as string // New parameter for admin uploads
 
     console.log('Form data parsed, file present:', !!file)
     console.log('File details:', file ? { name: file.name, size: file.size, type: file.type } : 'No file')
+    console.log('Target user ID:', targetUserId)
 
     if (!file) {
       console.log('Upload failed: No file in form data')
       return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 })
+    }
+
+    // Determine the actual user ID to store the file for
+    let fileOwnerId = authUser.id // Default to authenticated user
+
+    // If targetUserId is provided and user is admin, use that instead
+    if (targetUserId && authUser.role === 'ADMIN') {
+      const targetUserIdNum = parseInt(targetUserId)
+      if (!isNaN(targetUserIdNum)) {
+        // Verify target user exists
+        const targetUser = await db.user.findUnique({
+          where: { id: targetUserIdNum },
+          select: { id: true }
+        })
+        
+        if (targetUser) {
+          fileOwnerId = targetUserIdNum
+          console.log(`Admin upload: File will be stored for user ${fileOwnerId} instead of admin ${authUser.id}`)
+        } else {
+          console.log('Upload failed: Target user not found')
+          return NextResponse.json({ success: false, error: 'Target user not found' }, { status: 400 })
+        }
+      }
     }
 
     // Validate file type - Allow documents and images
@@ -84,11 +111,11 @@ export async function POST(request: NextRequest) {
     const extension = path.extname(originalName)
     const baseName = path.basename(originalName, extension)
     const fileType = isImage ? 'img' : 'doc'
-    const uniqueId = `${fileType}-${authUser.id}-${timestamp}-${baseName}`
+    const uniqueId = `${fileType}-${fileOwnerId}-${timestamp}-${baseName}`
 
-    console.log(`Creating file record in database for: ${file.name}`)
+    console.log(`Creating file record in database for: ${file.name} (owner: ${fileOwnerId})`)
 
-    // Create a file record in database (for profile photos and other legacy uses)
+    // Create a file record in database
     const fileRecord = await db.userFile.create({
       data: {
         fileName: file.name,
@@ -96,8 +123,8 @@ export async function POST(request: NextRequest) {
         fileType: file.type,
         fileSize: file.size,
         description: type === 'profile' ? 'Profile photo' : 'Uploaded file',
-        userId: authUser.id,
-        uploadedById: authUser.id,
+        userId: fileOwnerId, // Use the determined owner ID
+        uploadedById: authUser.id, // Keep track of who actually uploaded it
       }
     })
 

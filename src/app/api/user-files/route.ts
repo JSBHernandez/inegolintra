@@ -25,24 +25,20 @@ export async function GET(request: NextRequest) {
     
     if (authUser.role === 'ADMIN') {
       if (userId) {
-        // Admin viewing specific user: show files assigned to that user OR uploaded by that user
+        // Admin viewing specific user: show files assigned to that user only
         whereClause = {
-          OR: [
-            { userId: parseInt(userId) },           // Files assigned to the user
-            { uploadedById: parseInt(userId) }      // Files uploaded by the user
-          ]
+          userId: parseInt(userId)
         }
       } else {
-        // Admin viewing all files
-        whereClause = {}
+        // Admin viewing their own files (My Profile context): show only files assigned to the admin
+        whereClause = {
+          userId: authUser.id
+        }
       }
     } else {
-      // Regular user: show files assigned to them OR uploaded by them
+      // Regular user: show only files assigned to them
       whereClause = {
-        OR: [
-          { userId: authUser.id },        // Files assigned to the user
-          { uploadedById: authUser.id }   // Files uploaded by the user
-        ]
+        userId: authUser.id
       }
     }
 
@@ -50,6 +46,9 @@ export async function GET(request: NextRequest) {
     console.log('- Auth user:', { id: authUser.id, role: authUser.role, name: authUser.name })
     console.log('- Where clause:', JSON.stringify(whereClause, null, 2))
     console.log('- UserId param:', userId)
+    console.log('- Request URL:', request.url)
+    console.log('- Context:', userId ? `Admin viewing user ${userId} files` : `${authUser.role} viewing own files`)
+    console.log('- Logic: Show only files assigned TO the user (userId field)')
 
     const files = await db.userFile.findMany({
       where: whereClause,
@@ -105,7 +104,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log('📁 User Files POST - Raw body:', body)
+    
     const validatedData = uploadUserFileSchema.parse(body)
+    console.log('📁 User Files POST - Validated data:', {
+      targetUserId: validatedData.userId,
+      adminId: authUser.id,
+      fileName: validatedData.fileName
+    })
 
     // Determine target user ID
     const targetUserId = validatedData.userId || authUser.id
@@ -123,6 +129,13 @@ export async function POST(request: NextRequest) {
     if (!targetUser) {
       return NextResponse.json({ success: false, error: 'Target user not found' }, { status: 404 })
     }
+
+    console.log('📁 Creating file record:', {
+      fileName: validatedData.fileName,
+      targetUserId: targetUserId,
+      uploadedById: authUser.id,
+      context: targetUserId !== authUser.id ? 'Admin upload for user' : 'Personal upload'
+    })
 
     const file = await db.userFile.create({
       data: {
@@ -150,6 +163,13 @@ export async function POST(request: NextRequest) {
           }
         }
       }
+    })
+
+    console.log('📁 File created successfully:', {
+      id: file.id,
+      userId: file.userId,
+      uploadedById: file.uploadedById,
+      fileName: file.fileName
     })
 
     return NextResponse.json({ 

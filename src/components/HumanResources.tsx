@@ -663,8 +663,18 @@ export default function HumanResources({ user }: HumanResourcesProps) {
                       accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx"
                       onChange={handleFileUpload}
                       disabled={uploadingFile}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 disabled:opacity-50"
+                      className="hidden"
+                      id="hr-file-upload"
                     />
+                    <label 
+                      htmlFor="hr-file-upload"
+                      className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer disabled:opacity-50 w-full"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                      </svg>
+                      Choose File
+                    </label>
                     <p className="text-xs text-gray-500 mt-1">
                       Supported formats: JPG, JPEG, PNG, PDF, Word, Excel (Max 2MB - deployment optimized)
                     </p>

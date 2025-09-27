@@ -4,28 +4,30 @@ import { db } from '@/lib/db'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('User file upload request received')
+    console.log('🚀 /api/user-files/upload - Request received')
+    console.log('🚀 Request URL:', request.url)
+    console.log('🚀 Request method:', request.method)
     
     const authUser = await verifyAuth(request)
     if (!authUser) {
-      console.log('Upload failed: Unauthorized user')
+      console.log('🚨 Upload failed: Unauthorized user')
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
 
-    console.log(`User file upload request from user: ${authUser.id}`)
+    console.log(`🚀 User file upload request from user: ${authUser.id} (${authUser.name})`)
 
     const data = await request.formData()
     const file: File | null = data.get('file') as unknown as File
     const description: string | null = data.get('description') as string
 
-    console.log('Form data parsed:', { 
+    console.log('🚀 Form data parsed:', { 
       hasFile: !!file,
       description: description || 'No description provided',
       fileDetails: file ? { name: file.name, size: file.size, type: file.type } : 'No file'
     })
 
     if (!file) {
-      console.log('Upload failed: No file in form data')
+      console.log('🚨 Upload failed: No file in form data')
       return NextResponse.json({ success: false, error: 'No file uploaded' }, { status: 400 })
     }
 

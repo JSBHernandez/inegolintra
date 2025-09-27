@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AuthUser } from '@/types'
 import { countryOptions } from '@/lib/validations'
 import UserFiles from './UserFiles'
+import { useEffect } from 'react'
 
 interface MyProfileProps {
   user: AuthUser
@@ -68,6 +69,8 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
   const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [photoUploading, setPhotoUploading] = useState(false)
+  const [imageKey, setImageKey] = useState<number>(Date.now()) // For forcing image refresh
+  const [imageUrl, setImageUrl] = useState<string>('') // Direct image URL from server
 
   const resetMessages = () => {
     setMessage('')
@@ -75,6 +78,58 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
     setProfileMessage('')
     setProfileError('')
   }
+
+  // Function to fetch image directly as data URL
+  const fetchImageDirectly = async (url: string) => {
+    if (!url || !url.startsWith('/api/files/')) {
+      return url
+    }
+    
+    try {
+      const response = await fetch(`${url}?direct=true`)
+      
+      if (response.ok) {
+        const result = await response.json()
+        
+        if (result.success && result.dataUrl) {
+          // Validate the data URL format
+          const isValidDataUrl = result.dataUrl.startsWith('data:image/') && result.dataUrl.includes('base64,')
+          
+          if (isValidDataUrl) {
+            console.log('Successfully loaded image data URL, length:', result.dataUrl.length)
+            return result.dataUrl
+          } else {
+            console.warn('Invalid data URL format received')
+          }
+        }
+      } else {
+        console.warn('Direct fetch failed with status:', response.status)
+      }
+    } catch (error) {
+      console.error('Error fetching image directly:', error)
+    }
+    
+    // Fallback to original URL with cache buster
+    return `${url}?t=${imageKey}`
+  }
+
+  // Initialize image URL when component loads
+  useEffect(() => {
+    const initializeImage = async () => {
+      if (profileForm.profilePhoto) {
+        if (profileForm.profilePhoto.startsWith('/api/files/')) {
+          const directUrl = await fetchImageDirectly(profileForm.profilePhoto)
+          setImageUrl(directUrl)
+        } else {
+          setImageUrl(profileForm.profilePhoto)
+        }
+      } else {
+        setImageUrl('')
+      }
+    }
+    
+    initializeImage()
+  }, [profileForm.profilePhoto, imageKey])
 
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -194,10 +249,11 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
         setIsEditingProfile(false)
         setPhotoFile(null)
         setPhotoPreview(null)
+        setImageKey(Date.now()) // Force image refresh
         
         // Update local form with the new data
         if (data.data) {
-          setProfileForm({
+          const newProfileData = {
             name: data.data.name || '',
             position: data.data.position || '',
             address: data.data.address || '',
@@ -206,7 +262,18 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
             emergencyPhone: data.data.emergencyPhone || '',
             emergencyContactName: data.data.emergencyContactName || '',
             profilePhoto: data.data.profilePhoto || ''
-          })
+          }
+          
+          setProfileForm(newProfileData)
+          
+          // Fetch the image directly if it's from our API
+          if (newProfileData.profilePhoto && newProfileData.profilePhoto.startsWith('/api/files/')) {
+            fetchImageDirectly(newProfileData.profilePhoto).then(directUrl => {
+              setImageUrl(directUrl)
+            })
+          } else {
+            setImageUrl(newProfileData.profilePhoto)
+          }
           
           // Notify parent component about the update only if we have valid data
           if (onProfileUpdated && data.data.id) {
@@ -392,39 +459,49 @@ export default function MyProfile({ user, onPasswordChanged, onProfileUpdated, o
                     <div className="flex items-start space-x-4">
                       <div className="flex-shrink-0">
                         <div className="w-20 h-20 bg-gray-200 rounded-full overflow-hidden border-2 border-gray-300">
-                          {photoPreview || profileForm.profilePhoto ? (
+                          {photoPreview ? (
                             <img
-                              src={photoPreview || profileForm.profilePhoto}
-                              alt="Profile"
+                              key={`preview-${imageKey}`}
+                              src={photoPreview}
+                              alt="Profile Preview"
                               className="w-full h-full object-cover"
                             />
+                          ) : imageUrl ? (
+                            <img
+                              key={`image-${imageKey}`}
+                              src={imageUrl}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                              onError={() => {
+                                console.log('Image failed to load, clearing URL')
+                                setImageUrl('')
+                              }}
+                            />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-400">
-                              <span className="text-2xl">👤</span>
+                            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+                              No Photo
                             </div>
                           )}
                         </div>
                       </div>
                       {isEditingProfile && (
                         <div className="flex-1">
-                          <div className="relative">
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={handlePhotoChange}
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              id="photo-upload"
-                            />
-                            <label 
-                              htmlFor="photo-upload"
-                              className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer"
-                            >
-                              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                              </svg>
-                              Choose File
-                            </label>
-                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handlePhotoChange}
+                            className="hidden"
+                            id="photo-upload"
+                          />
+                          <label 
+                            htmlFor="photo-upload"
+                            className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer w-full"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                            </svg>
+                            Choose File
+                          </label>
                           <p className="mt-1 text-xs text-gray-500">
                             Upload a photo (max 2MB, JPG/PNG - deployment optimized)
                           </p>

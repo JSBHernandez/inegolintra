@@ -34,9 +34,18 @@ export default function UserFiles({ user, currentUser }: UserFilesProps) {
     // Fetch current user if not provided
     if (!authUser) {
       fetchCurrentUser()
+    } else {
+      // If authUser is already available, fetch files immediately
+      fetchFiles()
     }
-    fetchFiles()
   }, [])
+
+  // Fetch files when authUser becomes available
+  useEffect(() => {
+    if (authUser) {
+      fetchFiles()
+    }
+  }, [authUser])
 
   const fetchCurrentUser = async () => {
     try {
@@ -51,8 +60,26 @@ export default function UserFiles({ user, currentUser }: UserFilesProps) {
   }
 
   const fetchFiles = async () => {
+    // Don't fetch if authUser is not available yet
+    if (!authUser) {
+      console.log('Skipping fetchFiles - authUser not available yet')
+      return
+    }
+
     try {
-      const response = await fetch('/api/user-files')
+      // If we're viewing a specific user from User Management, pass their userId
+      const url = user.id && authUser.role === 'ADMIN' && authUser.id !== user.id 
+        ? `/api/user-files?userId=${user.id}`
+        : '/api/user-files'
+      
+      console.log('Fetching files for:', { 
+        targetUserId: user.id, 
+        adminId: authUser.id, 
+        url,
+        context: user.id && authUser.role === 'ADMIN' && authUser.id !== user.id ? 'User Management' : 'My Profile'
+      })
+      
+      const response = await fetch(url)
       const result = await response.json()
 
       if (result.success) {
@@ -137,6 +164,8 @@ export default function UserFiles({ user, currentUser }: UserFilesProps) {
           }
           
           console.log('Making request to /api/user-files with payload for user:', user.id)
+          console.log('Full payload being sent:', JSON.stringify(payload, null, 2))
+          
           const response = await fetch('/api/user-files', {
             method: 'POST',
             headers: {
@@ -411,8 +440,34 @@ export default function UserFiles({ user, currentUser }: UserFilesProps) {
                   accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.xls,.xlsx"
                   onChange={handleFileUpload}
                   disabled={uploadingFile}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100 disabled:opacity-50"
+                  className="hidden"
+                  id="user-file-upload"
                 />
+                <label 
+                  htmlFor="user-file-upload"
+                  className="flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer disabled:opacity-50 w-full"
+                >
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  Choose File
+                </label>
+                
+                {/* Show selected file name */}
+                {selectedFile && (
+                  <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded-md">
+                    <div className="flex items-center">
+                      <svg className="w-4 h-4 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <span className="text-sm text-blue-800 font-medium">{selectedFile.name}</span>
+                      <span className="text-xs text-blue-600 ml-2">
+                        ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+                      </span>
+                    </div>
+                  </div>
+                )}
+                
                 <p className="text-xs text-gray-500 mt-1">
                   Supported: JPG, PNG, PDF, Word, Excel (Max 2MB - deployment optimized) - <strong>PDF is recommended</strong>
                 </p>

@@ -246,7 +246,7 @@ model News {
 model UserFile {
   id          Int       @id @default(autoincrement())
   fileName    String    @db.VarChar(255)
-  fileUrl     String    @db.VarChar(500)
+  fileUrl     String    @db.LongText
   fileType    String    @db.VarChar(100)
   fileSize    Int       // Size in bytes
   description String?   @db.VarChar(500)

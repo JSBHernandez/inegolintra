@@ -13,9 +13,28 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     const validatedData = updateCompleteProfileSchema.parse(body)
 
+    // Determine which user profile to update
+    let targetUserId = authUser.id // Default to authenticated user
+    
+    // If userId is provided in the request and user is admin, update that user's profile
+    if (validatedData.userId && authUser.role === 'ADMIN') {
+      // Verify target user exists
+      const targetUser = await db.user.findUnique({
+        where: { id: validatedData.userId },
+        select: { id: true }
+      })
+      
+      if (targetUser) {
+        targetUserId = validatedData.userId
+        console.log(`Admin updating profile for user ${targetUserId}`)
+      } else {
+        return NextResponse.json({ success: false, error: 'Target user not found' }, { status: 400 })
+      }
+    }
+
     // Update user profile (both basic and additional info)
     const updatedUser = await db.user.update({
-      where: { id: authUser.id },
+      where: { id: targetUserId },
       data: {
         // Basic information
         name: validatedData.name,
