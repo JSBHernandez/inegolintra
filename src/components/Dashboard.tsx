@@ -13,7 +13,7 @@ import {
   NewsManagement,
   ImmigrationNews
 } from './index'
-import EmailTester from './EmailTester'
+import EmailTester from '../../temp/EmailTester'
 
 interface DashboardProps {
   user: AuthUser | null
