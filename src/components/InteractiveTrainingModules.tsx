@@ -34,18 +34,36 @@ const getCategoryLabel = (category: TrainingCategory | null | undefined): string
   return TRAINING_CATEGORIES.find(c => c.value === category)?.label || category
 }
 
-const getYouTubeEmbedUrl = (url: string): string => {
+const getVideoEmbedUrl = (url: string): string => {
   if (!url) return ''
   
-  // Extract video ID from various YouTube URL formats
-  const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
-  const match = url.match(regExp)
-  
-  if (match && match[2].length === 11) {
-    return `https://www.youtube.com/embed/${match[2]}`
+  // Check for Loom videos
+  // Format: https://www.loom.com/share/{video_id}
+  const loomRegExp = /loom\.com\/share\/([a-zA-Z0-9]+)/
+  const loomMatch = url.match(loomRegExp)
+  if (loomMatch && loomMatch[1]) {
+    return `https://www.loom.com/embed/${loomMatch[1]}`
   }
   
-  return url // Return original if not a YouTube URL
+  // Check for YouTube videos
+  // Supports: youtube.com/watch?v=, youtu.be/, youtube.com/embed/, etc.
+  const youtubeRegExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/
+  const youtubeMatch = url.match(youtubeRegExp)
+  if (youtubeMatch && youtubeMatch[2].length === 11) {
+    return `https://www.youtube.com/embed/${youtubeMatch[2]}`
+  }
+  
+  // Check for Vimeo videos
+  // Format: https://vimeo.com/{video_id}
+  const vimeoRegExp = /vimeo\.com\/(\d+)/
+  const vimeoMatch = url.match(vimeoRegExp)
+  if (vimeoMatch && vimeoMatch[1]) {
+    return `https://player.vimeo.com/video/${vimeoMatch[1]}`
+  }
+  
+  // If no pattern matches, return the original URL
+  // This allows for direct embed URLs to work as-is
+  return url
 }
 
 export default function InteractiveTrainingModules({ user }: InteractiveTrainingModulesProps) {
@@ -974,7 +992,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                                   <div className="lg:w-1/2">
                                     <div className="aspect-video">
                                       <iframe
-                                        src={getYouTubeEmbedUrl(content.url || '')}
+                                        src={getVideoEmbedUrl(content.url || '')}
                                         className="w-full h-full"
                                         frameBorder="0"
                                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -1439,7 +1457,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                       <svg className="w-8 h-8 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
-                      <div className="font-medium">YouTube Video</div>
+                      <div className="font-medium">Video Online</div>
                     </button>
                     <button
                       type="button"
@@ -1461,21 +1479,21 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                 {contentForm.contentType === 'VIDEO' && (
                   <div className="bg-red-50 rounded-xl p-6">
                     <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      YouTube URL *
+                      Video URL *
                     </label>
                     <input
                       type="url"
                       value={contentForm.url}
                       onChange={(e) => setContentForm({ ...contentForm, url: e.target.value })}
                       className="w-full px-4 py-4 border border-red-200 rounded-xl focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-all"
-                      placeholder="https://www.youtube.com/watch?v=..."
+                      placeholder="https://www.loom.com/share/... or https://www.youtube.com/watch?v=..."
                       required
                     />
                     <p className="text-sm text-red-600 mt-2 flex items-center gap-2">
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Supports youtube.com/watch and youtu.be formats
+                      Soporta YouTube, Loom, Vimeo y otras plataformas de video
                     </p>
                   </div>
                 )}
