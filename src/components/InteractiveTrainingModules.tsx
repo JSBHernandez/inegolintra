@@ -423,7 +423,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
         fileData: contentForm.fileData || undefined,
         fileName: finalFileName || undefined,
         fileSize: finalFileSize || undefined,
-        order: contentForm.order,
+        order: contentForm.order || getNextContentOrder(), // Use automatic order if not specified
         isActive: contentForm.isActive,
         moduleId: selectedModule.id
       }
@@ -485,7 +485,7 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
         fileData: contentForm.fileData || undefined,
         fileName: contentForm.fileName || undefined,
         fileSize: contentForm.fileSize || undefined,
-        order: contentForm.order,
+        order: contentForm.order || getNextContentOrder(), // Use automatic order if not specified
         isActive: contentForm.isActive,
         moduleId: selectedModule.id
       }
@@ -1578,14 +1578,15 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-3">
-                      Display Order
+                      Display Order <span className="text-gray-400 font-normal">(opcional)</span>
                     </label>
                     <input
                       type="number"
                       value={contentForm.order}
                       onChange={(e) => setContentForm({ ...contentForm, order: parseInt(e.target.value) || 0 })}
                       className="w-full px-4 py-4 border border-gray-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all"
-                      min="1"
+                      min="0"
+                      placeholder={`Auto: ${getNextContentOrder()}`}
                     />
                   </div>
 
