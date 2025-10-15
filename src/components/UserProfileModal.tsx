@@ -35,6 +35,9 @@ export default function UserProfileModal({
   const [profileMessage, setProfileMessage] = useState('')
   const [profileError, setProfileError] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  
+  // Local user state to handle updates
+  const [currentUser, setCurrentUser] = useState(user)
 
   const [profileForm, setProfileForm] = useState<ProfileForm>({
     address: user.address || '',
@@ -46,7 +49,7 @@ export default function UserProfileModal({
   })
 
   // Profile photo states
-  const [_photoFile, setPhotoFile] = useState<File | null>(null)
+  const [photoFile, setPhotoFile] = useState<File | null>(null)
   const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [_photoUploading, _setPhotoUploading] = useState(false)
 
@@ -63,7 +66,7 @@ export default function UserProfileModal({
     onClose()
   }
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
@@ -76,7 +79,7 @@ export default function UserProfileModal({
       reader.onload = (e) => {
         const base64 = e.target?.result as string
         setPhotoPreview(base64)
-        setProfileForm({ ...profileForm, profilePhoto: base64 })
+        // Don't set profileForm.profilePhoto here - we'll upload the file first
       }
       reader.readAsDataURL(file)
     }
@@ -88,19 +91,47 @@ export default function UserProfileModal({
     setProfileLoading(true)
 
     try {
+      let updatedProfileForm = { ...profileForm }
+      
+      // If there's a new photo file, upload it first
+      if (photoFile) {
+        console.log('Uploading new photo file:', photoFile.name)
+        
+        const formData = new FormData()
+        formData.append('file', photoFile)
+        formData.append('targetUserId', currentUser.id.toString())
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+        
+        const uploadResult = await uploadResponse.json()
+        console.log('Photo upload result:', uploadResult)
+        
+        if (uploadResult.success) {
+          // Use the file URL instead of base64
+          updatedProfileForm.profilePhoto = uploadResult.url
+          console.log('Photo uploaded successfully, using URL:', uploadResult.url)
+        } else {
+          throw new Error(uploadResult.error || 'Failed to upload photo')
+        }
+      }
+
       console.log('UserProfileModal sending data:', {
-        userId: user.id,
-        profileForm,
-        address: profileForm.address,
-        country: profileForm.country
+        userId: currentUser.id,
+        profileForm: updatedProfileForm,
+        address: updatedProfileForm.address,
+        country: updatedProfileForm.country,
+        profilePhoto: updatedProfileForm.profilePhoto // Specific logging for photo
       })
 
-      const response = await fetch(`/api/users/${user.id}`, {
+      const response = await fetch(`/api/users/${currentUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(profileForm),
+        body: JSON.stringify(updatedProfileForm),
       })
 
       const data = await response.json()
@@ -113,9 +144,29 @@ export default function UserProfileModal({
       setProfileMessage('Profile updated successfully!')
       setIsEditingProfile(false)
       
+      // Update local user state with the new profile photo
+      if (data.data) {
+        setCurrentUser(data.data)
+        // Update the form with the new data
+        setProfileForm({
+          address: data.data.address || '',
+          country: data.data.country || '',
+          personalPhone: data.data.personalPhone || '',
+          emergencyPhone: data.data.emergencyPhone || '',
+          emergencyContactName: data.data.emergencyContactName || '',
+          profilePhoto: data.data.profilePhoto || ''
+        })
+        // Clear the photo preview and file since we now have the updated user
+        setPhotoPreview(null)
+        setPhotoFile(null)
+      }
+      
       // Call the callback with the updated user data
       if (data.data && onUserUpdate) {
+        console.log('UserProfileModal calling onUserUpdate with:', data.data)
         onUserUpdate(data.data)
+      } else {
+        console.error('No data.data received:', data)
       }
       
       // Also close modal after successful update
@@ -161,24 +212,24 @@ export default function UserProfileModal({
           <div className="flex items-center space-x-4">
             {/* Profile Photo */}
             <div className="flex-shrink-0 h-16 w-16">
-              {user.profilePhoto ? (
+              {currentUser.profilePhoto ? (
                 <img 
-                  src={photoPreview || user.profilePhoto} 
-                  alt={user.name}
+                  src={photoPreview || currentUser.profilePhoto} 
+                  alt={currentUser.name}
                   className="h-16 w-16 rounded-full object-cover border-2 border-gray-200"
                 />
               ) : (
                 <div className="h-16 w-16 rounded-full bg-gray-300 flex items-center justify-center">
                   <span className="text-gray-600 font-medium text-xl">
-                    {user.name.charAt(0).toUpperCase()}
+                    {currentUser.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
             </div>
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">{user.name}</h2>
-              <p className="text-sm text-gray-500">{user.position}</p>
-              <p className="text-sm text-gray-500">{user.email}</p>
+              <h2 className="text-xl font-semibold text-gray-900">{currentUser.name}</h2>
+              <p className="text-sm text-gray-500">{currentUser.position}</p>
+              <p className="text-sm text-gray-500">{currentUser.email}</p>
             </div>
           </div>
           <button
@@ -243,7 +294,7 @@ export default function UserProfileModal({
                       Full Name
                     </label>
                     <div className="p-3 bg-white border border-gray-200 rounded-md">
-                      {user.name}
+                      {currentUser.name}
                     </div>
                   </div>
 
@@ -252,7 +303,7 @@ export default function UserProfileModal({
                       Position/Role
                     </label>
                     <div className="p-3 bg-white border border-gray-200 rounded-md">
-                      {user.position}
+                      {currentUser.position}
                     </div>
                   </div>
 
@@ -261,7 +312,7 @@ export default function UserProfileModal({
                       Email Address
                     </label>
                     <div className="p-3 bg-white border border-gray-200 rounded-md">
-                      {user.email}
+                      {currentUser.email}
                     </div>
                   </div>
 
@@ -270,7 +321,7 @@ export default function UserProfileModal({
                       System Role
                     </label>
                     <div className="p-3 bg-white border border-gray-200 rounded-md">
-                      {user.role === 'ADMIN' ? 'Administrator' : 'Agent'}
+                      {currentUser.role === 'ADMIN' ? 'Administrator' : 'Agent'}
                     </div>
                   </div>
                 </div>
@@ -279,10 +330,10 @@ export default function UserProfileModal({
                   <h4 className="text-md font-medium text-gray-900 mb-4">Account Status</h4>
                   <div className="flex items-center space-x-4">
                     <div className="flex items-center">
-                      <div className={`w-3 h-3 rounded-full mr-2 ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                      <span className="text-sm text-gray-600">{user.isActive ? 'Active Account' : 'Inactive Account'}</span>
+                      <div className={`w-3 h-3 rounded-full mr-2 ${currentUser.isActive ? 'bg-green-500' : 'bg-red-500'}`}></div>
+                      <span className="text-sm text-gray-600">{currentUser.isActive ? 'Active Account' : 'Inactive Account'}</span>
                     </div>
-                    {user.mustChangePassword && (
+                    {currentUser.mustChangePassword && (
                       <div className="flex items-center">
                         <div className="w-3 h-3 bg-orange-500 rounded-full mr-2"></div>
                         <span className="text-sm text-orange-600">Password change required</span>
@@ -325,16 +376,16 @@ export default function UserProfileModal({
                       </label>
                       <div className="flex items-center space-x-4">
                         <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-gray-200">
-                          {photoPreview || user.profilePhoto ? (
+                          {photoPreview || currentUser.profilePhoto ? (
                             <img 
-                              src={photoPreview || user.profilePhoto} 
+                              src={photoPreview || currentUser.profilePhoto} 
                               alt="Preview"
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <div className="w-full h-full bg-gray-300 flex items-center justify-center">
                               <span className="text-gray-600 font-medium">
-                                {user.name.charAt(0).toUpperCase()}
+                                {currentUser.name.charAt(0).toUpperCase()}
                               </span>
                             </div>
                           )}
@@ -499,7 +550,7 @@ export default function UserProfileModal({
             <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Confirm User Deletion</h3>
               <p className="text-gray-600 mb-6">
-                Are you sure you want to delete <strong>{user.name}</strong>? This action cannot be undone.
+                Are you sure you want to delete <strong>{currentUser.name}</strong>? This action cannot be undone.
               </p>
               <div className="flex justify-end space-x-3">
                 <button

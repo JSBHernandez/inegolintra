@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { AuthUser, PermissionRequest, IncidentReport } from '@/types'
+import { AuthUser, PermissionRequest, IncidentReport, User } from '@/types'
 import { 
   permissionRequestSchema, 
   incidentReportSchema, 
@@ -32,6 +32,12 @@ export default function HumanResources({ user }: HumanResourcesProps) {
   const [loading, setLoading] = useState(true)
   const [submitMessage, setSubmitMessage] = useState('')
   const [uploadingFile, setUploadingFile] = useState(false)
+  
+  // User filter states
+  const [users, setUsers] = useState<User[]>([])
+  const [selectedUserId, setSelectedUserId] = useState<string>('') // Empty string means no filter
+  const [filteredPermissionRequests, setFilteredPermissionRequests] = useState<PermissionRequest[]>([])
+  const [filteredIncidentReports, setFilteredIncidentReports] = useState<IncidentReport[]>([])
 
   const permissionForm = useForm<PermissionRequestFormData>({
     resolver: zodResolver(permissionRequestSchema),
@@ -46,7 +52,24 @@ export default function HumanResources({ user }: HumanResourcesProps) {
 
   useEffect(() => {
     fetchData()
-  }, [])
+    if (user.role === 'ADMIN') {
+      fetchUsers()
+    }
+  }, [user.role])
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('/api/users')
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          setUsers(result.data || [])
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    }
+  }
 
   const fetchData = async () => {
     try {
@@ -71,6 +94,28 @@ export default function HumanResources({ user }: HumanResourcesProps) {
       console.error('Error fetching HR data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // Filter data based on selected user
+  useEffect(() => {
+    filterData()
+  }, [permissionRequests, incidentReports, selectedUserId])
+
+  const filterData = () => {
+    if (selectedUserId === '') {
+      // No filter - show all data
+      setFilteredPermissionRequests(permissionRequests)
+      setFilteredIncidentReports(incidentReports)
+    } else {
+      // Filter by selected user
+      const userId = parseInt(selectedUserId)
+      setFilteredPermissionRequests(
+        permissionRequests.filter(request => request.userId === userId)
+      )
+      setFilteredIncidentReports(
+        incidentReports.filter(report => report.userId === userId)
+      )
     }
   }
 
@@ -334,38 +379,64 @@ export default function HumanResources({ user }: HumanResourcesProps) {
       {/* Tab Navigation */}
       <div className="bg-white rounded-lg shadow-sm mb-6">
         <div className="border-b border-gray-200">
-          <nav className="flex space-x-8 px-6">
-            <button
-              onClick={() => setActiveTab('permissions')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'permissions'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Permission Requests ({permissionRequests.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('incidents')}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'incidents'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              Incident Reports ({incidentReports.length})
-            </button>
-          </nav>
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center px-6 space-y-4 sm:space-y-0">
+            <nav className="flex space-x-8">
+              <button
+                onClick={() => setActiveTab('permissions')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'permissions'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Permission Requests ({filteredPermissionRequests.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('incidents')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'incidents'
+                    ? 'border-orange-500 text-orange-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Incident Reports ({filteredIncidentReports.length})
+              </button>
+            </nav>
+            
+            {/* User Filter - Only visible for admins */}
+            {user.role === 'ADMIN' && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                <label htmlFor="userFilter" className="text-sm font-medium text-gray-700">
+                  Filter by User:
+                </label>
+                <select
+                  id="userFilter"
+                  value={selectedUserId}
+                  onChange={(e) => setSelectedUserId(e.target.value)}
+                  className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 w-full sm:w-auto min-w-48"
+                >
+                  <option value="">All Users</option>
+                  {users.map((user) => (
+                    <option key={user.id} value={user.id.toString()}>
+                      {user.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Tab Content */}
         <div className="p-6">
           {activeTab === 'permissions' && (
             <div className="space-y-4">
-              {permissionRequests.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No permission requests found.</p>
+              {filteredPermissionRequests.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  {selectedUserId ? 'No permission requests found for selected user.' : 'No permission requests found.'}
+                </p>
               ) : (
-                permissionRequests.map((request) => (
+                filteredPermissionRequests.map((request) => (
                   <div key={request.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -413,10 +484,12 @@ export default function HumanResources({ user }: HumanResourcesProps) {
 
           {activeTab === 'incidents' && (
             <div className="space-y-4">
-              {incidentReports.length === 0 ? (
-                <p className="text-gray-500 text-center py-8">No incident reports found.</p>
+              {filteredIncidentReports.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">
+                  {selectedUserId ? 'No incident reports found for selected user.' : 'No incident reports found.'}
+                </p>
               ) : (
-                incidentReports.map((incident) => (
+                filteredIncidentReports.map((incident) => (
                   <div key={incident.id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">

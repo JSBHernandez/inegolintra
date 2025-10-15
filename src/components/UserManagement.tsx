@@ -124,7 +124,11 @@ export default function UserManagement() {
 
   const handleUserProfileUpdate = (updatedUser: User) => {
     console.log('UserManagement received user update:', updatedUser)
+    console.log('Type of updatedUser:', typeof updatedUser)
+    console.log('updatedUser details:', JSON.stringify(updatedUser, null, 2))
+    
     if (updatedUser && updatedUser.id) {
+      console.log('Updating user with ID:', updatedUser.id)
       setUsers(users.map(user => user.id === updatedUser.id ? updatedUser : user))
       setSubmitMessage('User profile updated successfully!')
       setTimeout(() => setSubmitMessage(''), 3000)
