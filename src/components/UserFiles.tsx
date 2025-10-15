@@ -499,7 +499,7 @@ export default function UserFiles({ user, currentUser }: UserFilesProps) {
                 <button
                   type="submit"
                   disabled={uploadingFile || !selectedFile}
-                  onClick={(e) => {
+                  onClick={(_e) => {
                     console.log('🔥 BUTTON CLICKED - direct onClick handler')
                     console.log('Form errors:', uploadForm.formState.errors)
                     console.log('Form isValid:', uploadForm.formState.isValid)

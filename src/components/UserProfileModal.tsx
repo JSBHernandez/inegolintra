@@ -91,7 +91,7 @@ export default function UserProfileModal({
     setProfileLoading(true)
 
     try {
-      let updatedProfileForm = { ...profileForm }
+      const updatedProfileForm = { ...profileForm }
       
       // If there's a new photo file, upload it first
       if (photoFile) {

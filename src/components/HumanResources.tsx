@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useForm, SubmitHandler } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { AuthUser, PermissionRequest, IncidentReport, User } from '@/types'
@@ -98,11 +98,7 @@ export default function HumanResources({ user }: HumanResourcesProps) {
   }
 
   // Filter data based on selected user
-  useEffect(() => {
-    filterData()
-  }, [permissionRequests, incidentReports, selectedUserId])
-
-  const filterData = () => {
+  const filterData = useCallback(() => {
     if (selectedUserId === '') {
       // No filter - show all data
       setFilteredPermissionRequests(permissionRequests)
@@ -117,7 +113,11 @@ export default function HumanResources({ user }: HumanResourcesProps) {
         incidentReports.filter(report => report.userId === userId)
       )
     }
-  }
+  }, [permissionRequests, incidentReports, selectedUserId])
+
+  useEffect(() => {
+    filterData()
+  }, [filterData])
 
   const handlePermissionSubmit: SubmitHandler<PermissionRequestFormData> = async (data) => {
     try {
