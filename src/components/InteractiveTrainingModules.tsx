@@ -541,54 +541,44 @@ export default function InteractiveTrainingModules({ user }: InteractiveTraining
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-white rounded-2xl shadow-sm border">
-          <div className="px-6 sm:px-8 py-6">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              {/* Navigation & Title */}
-              <div className="flex items-center gap-4">
-                {currentView === 'content' && selectedModule && (
-                  <button
-                    onClick={handleBackToModules}
-                    className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-all duration-200 font-medium group"
-                  >
-                    <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                    Back to Modules
-                  </button>
-                )}
-                
-                <div>
-                  <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
-                    </svg>
-                    {currentView === 'modules' ? 'Learning Center' : 'Module Content'}
+        {/* Header - Only show in modules view */}
+        {currentView === 'modules' && (
+          <div className="bg-white rounded-2xl shadow-sm border">
+            <div className="px-6 sm:px-8 py-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                {/* Navigation & Title */}
+                <div className="flex items-center gap-4">
+                  <div>
+                    <div className="flex items-center gap-2 text-sm text-gray-500 mb-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012 2v2M7 7h10" />
+                      </svg>
+                      Learning Center
+                    </div>
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                      Training Modules
+                    </h1>
                   </div>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                    {currentView === 'modules' ? 'Training Modules' : selectedModule?.title}
-                  </h1>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex items-center gap-3">
-                {user.role === 'ADMIN' && currentView === 'modules' && (
-                  <button
-                    onClick={() => setShowCreateModule(true)}
-                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
-                  >
-                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    Create Module
-                  </button>
-                )}
+                {/* Action Buttons */}
+                <div className="flex items-center gap-3">
+                  {user.role === 'ADMIN' && (
+                    <button
+                      onClick={() => setShowCreateModule(true)}
+                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-medium rounded-xl hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    >
+                      <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      Create Module
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Messages */}
         {message && (
