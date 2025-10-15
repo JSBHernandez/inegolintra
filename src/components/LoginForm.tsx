@@ -69,7 +69,7 @@ export default function LoginForm({ onLoginSuccess }: LoginFormProps) {
               priority
             />
           </div>
-          <p className="text-lg sm:text-xl text-gray-600">Client Portal</p>
+          <p className="text-lg sm:text-xl text-gray-600">Inegol Intranet</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
